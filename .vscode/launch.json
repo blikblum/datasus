@@ -6,8 +6,6 @@
   "configurations": [
     {
       "args": [
-        "--require",
-        "chai/register-expect",
         "--colors",
         "${workspaceFolder}/test/*.spec.js"
       ],
@@ -24,8 +22,6 @@
       "args": [
         "--watch",
         "--parallel",
-        "--require",
-        "chai/register-expect",
         "--colors",
         "${workspaceFolder}/test/*.spec.js"
       ],

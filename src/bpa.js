@@ -1,5 +1,5 @@
 import { normalizeNumberText, padStartNumber } from './utils.js'
-import { differenceInYears } from 'date-fns'
+import { differenceInYears, format } from 'date-fns'
 
 const ENTRY_PER_SHEET = 20
 
@@ -44,6 +44,30 @@ const getConsolidatedEntry = (procedure, competence, origin, index) => {
   return entry
 }
 
+const getIndividualEntry = (procedure, competence, origin, index) => {
+  const sheetNumber = Math.trunc(index / ENTRY_PER_SHEET) + 1
+  const sequentialNumber = (index % ENTRY_PER_SHEET) + 1
+  const age = procedure.birthDate ? differenceInYears(new Date(), procedure.birthDate) : 0
+  const date = procedure.date ? format(procedure.date, 'yyyyMMdd') : '        '
+  const entry = [
+    '03',
+    padStartNumber(origin.cnes, 7, '0'),
+    padStartNumber(competence.year, 4, '0'),
+    padStartNumber(competence.month, 2, '0'),
+    `${procedure.cns || ''}`.padStart(15, ' '),
+    `${procedure.cbo || ''}`.padStart(6, ' '),
+    date,
+    padStartNumber(sheetNumber, 3, '0'),
+    padStartNumber(sequentialNumber, 2, '0'),
+    normalizeNumberText(procedure.code).padStart(10, '0'),
+    padStartNumber(age, 3, '0'),
+    padStartNumber(procedure.quantity, 6, '0'),
+    (procedure.origin || 'BPA').padStart(3, ' '),
+  ].join('')
+
+  return entry
+}
+
 export const generateBPA = ({
   procedures = [],
   origin = {},
@@ -58,7 +82,11 @@ export const generateBPA = ({
     return getConsolidatedEntry(procedure, competence, origin, index)
   })
 
+  const inidividualEntries = procedures.map((procedure, index) => {
+    return getIndividualEntry(procedure, competence, origin, index)
+  })
+
   const header = getHeader(competence, origin, destination, appInfo, { lineCount, pageCount })
 
-  return header + '\n' + consolidatedEntries.join('\n')
+  return header + '\n' + consolidatedEntries.join('\n') + '\n' + inidividualEntries.join('\n')
 }

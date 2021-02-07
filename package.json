@@ -12,22 +12,22 @@
   "keywords": [],
   "main": "dist/datasus.js",
   "devDependencies": {
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
+    "@babel/core": "^7.12.13",
+    "@babel/preset-env": "^7.12.13",
     "@rollup/plugin-babel": "^5.2.3",
-    "chai": "^4.2.0",
+    "chai": "^4.3.0",
     "del": "^6.0.0",
     "eslint": "^7.19.0",
     "eslint-config-prettier": "^7.2.0",
     "mocha": "^8.2.1",
     "prettier": "^2.0.2",
-    "rollup": "^2.3.3",
+    "rollup": "^2.38.5",
     "sinon": "^9.2.4"
   },
   "scripts": {
     "lint": "eslint src test tools",
-    "test": "mocha --require chai/register-expect test/*.spec.js",
-    "test:watch": "mocha --watch --parallel --require chai/register-expect test/*.spec.js",
+    "test": "mocha test/*.spec.js",
+    "test:watch": "mocha --watch --parallel test/*.spec.js",
     "build": "node tools/build.cjs",
     "prepublishOnly": "npm run build"
   },
