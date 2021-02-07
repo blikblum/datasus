@@ -1,7 +1,7 @@
 {
   "name": "datasus",
-  "version": "0.0.0",
-  "description": "A project template for authoring and publishing JavaScript libraries",
+  "version": "0.1.0",
+  "description": "Library with helpers for datasus",
   "type": "module",
   "repository": "blikblum/datasus",
   "author": "Luiz Américo Pereira Câmara",
@@ -10,7 +10,7 @@
   ],
   "license": "MIT",
   "keywords": [],
-  "main": "dist/datasus.js",
+  "main": "src/index.js",
   "devDependencies": {
     "@babel/core": "^7.12.13",
     "@babel/preset-env": "^7.12.13",
