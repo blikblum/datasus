@@ -192,12 +192,12 @@ describe('BPA', () => {
         expect(entry.substr(36, 3)).to.be.equal('000')
 
         entry = getConsolidatedEntries({
-          procedures: [{ birthDate: subYears(new Date(), 40) }],
+          procedures: [{ patient: { birthDate: subYears(new Date(), 40) } }],
         })[0]
         expect(entry.substr(36, 3)).to.be.equal('040')
 
         entry = getConsolidatedEntries({
-          procedures: [{ birthDate: subYears(new Date(), 51) }],
+          procedures: [{ patient: { birthDate: subYears(new Date(), 51) } }],
         })[0]
         expect(entry.substr(36, 3)).to.be.equal('051')
       })
@@ -374,6 +374,419 @@ describe('BPA', () => {
           procedures: [{ code: '03.02.06.002-2' }],
         })[0]
         expect(entry.substr(49, 10)).to.be.equal('0302060022')
+      })
+
+      it('should have patient cns at 60-74', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to white space
+        // todo: since is required: throw an error
+        expect(entry.substr(59, 15)).to.be.equal('               ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cns: 123456789012345 } }],
+        })[0]
+        expect(entry.substr(59, 15)).to.be.equal('123456789012345')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cns: 123456789010009 } }],
+        })[0]
+        expect(entry.substr(59, 15)).to.be.equal('123456789010009')
+      })
+
+      it('should have patient gender at 75', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to white space
+        // todo: throw an error?
+        expect(entry.substr(74, 1)).to.be.equal(' ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { gender: 'M' } }],
+        })[0]
+        expect(entry.substr(74, 1)).to.be.equal('M')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { gender: 'F' } }],
+        })[0]
+        expect(entry.substr(74, 1)).to.be.equal('F')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { gender: 'FEMALE' } }],
+        })[0]
+        expect(entry.substr(74, 1)).to.be.equal('F')
+      })
+
+      it('should have patient ibge at 76-81', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to white space
+        // todo: throw an error?
+        expect(entry.substr(75, 6)).to.be.equal('      ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { ibge: 1234 } }],
+        })[0]
+        expect(entry.substr(75, 6)).to.be.equal('1234  ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { ibge: 123456 } }],
+        })[0]
+        expect(entry.substr(75, 6)).to.be.equal('123456')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { gender: 'FEMALE', ibge: 123456 } }],
+        })[0]
+        expect(entry.substr(75, 6)).to.be.equal('123456')
+      })
+
+      it('should have patient cid at 82-85', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to white space
+        // todo: throw an error?
+        expect(entry.substr(81, 4)).to.be.equal('    ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cid: 'E11' } }],
+        })[0]
+        expect(entry.substr(81, 4)).to.be.equal('E11 ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cid: 'E112' } }],
+        })[0]
+        expect(entry.substr(81, 4)).to.be.equal('E112')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cid: 'E112', ibge: 1234567 } }],
+        })[0]
+        expect(entry.substr(81, 4)).to.be.equal('E112')
+      })
+
+      it('should have patient age at 86-88', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to zeros
+        expect(entry.substr(85, 3)).to.be.equal('000')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { birthDate: subYears(new Date(), 40) } }],
+        })[0]
+        expect(entry.substr(85, 3)).to.be.equal('040')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { birthDate: subYears(new Date(), 35) } }],
+        })[0]
+        expect(entry.substr(85, 3)).to.be.equal('035')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cid: 'E112x', birthDate: subYears(new Date(), 35) } }],
+        })[0]
+        expect(entry.substr(85, 3)).to.be.equal('035')
+      })
+
+      it('should have quantity at 89-94', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to zeros
+        expect(entry.substr(88, 6)).to.be.equal('000000')
+
+        entry = getIndividualEntries({
+          procedures: [{ quantity: 2 }],
+        })[0]
+        expect(entry.substr(88, 6)).to.be.equal('000002')
+
+        entry = getIndividualEntries({
+          procedures: [{ quantity: 25 }],
+        })[0]
+        expect(entry.substr(88, 6)).to.be.equal('000025')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { birthDate: subYears(new Date(), 1000) }, quantity: 25 }],
+        })[0]
+        expect(entry.substr(88, 6)).to.be.equal('000025')
+      })
+
+      it('should have character at 95-96', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to 01
+        expect(entry.substr(94, 2)).to.be.equal('01')
+
+        entry = getIndividualEntries({
+          procedures: [{ character: 2 }],
+        })[0]
+        expect(entry.substr(94, 2)).to.be.equal('02')
+
+        entry = getIndividualEntries({
+          procedures: [{ character: 25 }],
+        })[0]
+        expect(entry.substr(94, 2)).to.be.equal('25')
+
+        entry = getIndividualEntries({
+          procedures: [{ quantity: 1234567, character: 25 }],
+        })[0]
+        expect(entry.substr(94, 2)).to.be.equal('25')
+      })
+
+      it('should have authorization at 97-109', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to white space
+        // todo: throw an error?
+        expect(entry.substr(96, 13)).to.be.equal('             ')
+
+        entry = getIndividualEntries({
+          procedures: [{ authorization: 1234567890123 }],
+        })[0]
+        expect(entry.substr(96, 13)).to.be.equal('1234567890123')
+
+        entry = getIndividualEntries({
+          procedures: [{ authorization: 123 }],
+        })[0]
+        expect(entry.substr(96, 13)).to.be.equal('123          ')
+
+        entry = getIndividualEntries({
+          procedures: [{ authorization: 1234567890123, character: 100 }],
+        })[0]
+        expect(entry.substr(96, 13)).to.be.equal('1234567890123')
+      })
+
+      it('should have origin at 110-112', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to 'BPA'
+        expect(entry.substr(109, 3)).to.be.equal('BPA')
+
+        entry = getIndividualEntries({
+          procedures: [{ origin: 'BPA' }],
+        })[0]
+        expect(entry.substr(109, 3)).to.be.equal('BPA')
+
+        entry = getIndividualEntries({
+          procedures: [{ origin: 'PNI' }],
+        })[0]
+        expect(entry.substr(109, 3)).to.be.equal('PNI')
+
+        entry = getIndividualEntries({
+          procedures: [{ authorization: 12345678901239, origin: 'BPA' }],
+        })[0]
+        expect(entry.substr(109, 3)).to.be.equal('BPA')
+      })
+
+      it('should have patient name at 113-142', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to '   '
+        expect(entry.substr(112, 30)).to.be.equal('                              ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { name: 'Luiz Américo' } }],
+        })[0]
+        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo                  ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { name: 'Luiz Américo Pereira Camara da Silva Sauro' } }],
+        })[0]
+        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo Pereira Camara da')
+
+        entry = getIndividualEntries({
+          procedures: [{ origin: 'BPAX', patient: { name: 'Luiz Américo' } }],
+        })[0]
+        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo                  ')
+      })
+
+      it('should have patient birthDate at 143-150', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to '   '
+        expect(entry.substr(142, 8)).to.be.equal('        ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { birthDate: new Date(1978, 5, 18) } }],
+        })[0]
+        expect(entry.substr(142, 8)).to.be.equal('19780618')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { birthDate: new Date(1950, 10, 1) } }],
+        })[0]
+        expect(entry.substr(142, 8)).to.be.equal('19501101')
+
+        entry = getIndividualEntries({
+          procedures: [
+            {
+              patient: {
+                name: 'Luiz Américo Pereira Camara da Silva Sauro',
+                birthDate: new Date(1950, 10, 1),
+              },
+            },
+          ],
+        })[0]
+        expect(entry.substr(142, 8)).to.be.equal('19501101')
+      })
+
+      it('should have patient race at 151-152', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to '99'
+        expect(entry.substr(150, 2)).to.be.equal('99')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { race: 1 } }],
+        })[0]
+        expect(entry.substr(150, 2)).to.be.equal('01')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { race: 2 } }],
+        })[0]
+        expect(entry.substr(150, 2)).to.be.equal('02')
+      })
+
+      it('should have patient ethnicity at 153-156', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(152, 4)).to.be.equal('    ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { ethnicity: 1 } }],
+        })[0]
+        expect(entry.substr(152, 4)).to.be.equal('1   ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { ethnicity: 2 } }],
+        })[0]
+        expect(entry.substr(152, 4)).to.be.equal('2   ')
+      })
+
+      it('should have patient nationality at 157-159', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to '010'
+        expect(entry.substr(156, 3)).to.be.equal('010')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { nationality: 1 } }],
+        })[0]
+        expect(entry.substr(156, 3)).to.be.equal('001')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { nationality: 21 } }],
+        })[0]
+        expect(entry.substr(156, 3)).to.be.equal('021')
+      })
+
+      it('should have service code at 160-162', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to '   '
+        // todo implement
+        expect(entry.substr(159, 3)).to.be.equal('   ')
+      })
+
+      it('should have classification code at 163-165', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to '   '
+        // todo implement
+        expect(entry.substr(162, 3)).to.be.equal('   ')
+      })
+
+      it('should have sequence code at 166-173', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to '   '
+        // todo implement
+        expect(entry.substr(165, 8)).to.be.equal('        ')
+      })
+
+      it('should have area code at 174-177', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to '   '
+        // todo implement
+        expect(entry.substr(173, 4)).to.be.equal('    ')
+      })
+
+      it('should have maintainer cnpj at 178-191', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // defaults to '   '
+        // todo implement
+        expect(entry.substr(177, 14)).to.be.equal('              ')
+      })
+
+      it('should have patient cep at 192-199', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(191, 8)).to.be.equal('        ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cep: 40221225 } }],
+        })[0]
+        expect(entry.substr(191, 8)).to.be.equal('40221225')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cep: 123 } }],
+        })[0]
+        expect(entry.substr(191, 8)).to.be.equal('00000123')
+      })
+
+      it('should have patient place code at 200-202', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(199, 3)).to.be.equal('   ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { placeCode: 5 } }],
+        })[0]
+        expect(entry.substr(199, 3)).to.be.equal('005')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { placeCode: 12 } }],
+        })[0]
+        expect(entry.substr(199, 3)).to.be.equal('012')
+      })
+
+      it('should have patient address at 203-232', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(202, 30)).to.be.equal('                              ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { address: 'Rua bartolomeu 15' } }],
+        })[0]
+        expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15             ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { address: 'Rua bartolomeu 15 XXXXCXCXCXCXAAAAAA' } }],
+        })[0]
+        expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15 XXXXCXCXCXCX')
       })
     })
   })
