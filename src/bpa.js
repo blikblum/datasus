@@ -4,6 +4,7 @@ import { differenceInYears, format } from 'date-fns'
 const ENTRY_PER_SHEET = 20
 const THREE_BLANKS = '   '
 const EIGHT_BLANKS = '        '
+const TEN_BLANKS = '          '
 const EMPTY_DATE = EIGHT_BLANKS
 
 const getHeader = (competence, origin, destination, appInfo, { lineCount, pageCount }) => {
@@ -88,6 +89,12 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     `${patient.cep || EIGHT_BLANKS}`.padStart(8, '0').slice(0, 8),
     `${patient.placeCode || THREE_BLANKS}`.padStart(3, '0').slice(0, 3),
     `${patient.address || ''}`.padEnd(30, ' ').slice(0, 30),
+    `${patient.addressComplement || ''}`.padEnd(10, ' ').slice(0, 10),
+    `${patient.addressNumber || ''}`.padEnd(5, ' ').slice(0, 5),
+    `${patient.addressDistrict || ''}`.padEnd(30, ' ').slice(0, 30),
+    normalizeNumberText(patient.phone).padEnd(11, ' ').slice(0, 11),
+    `${patient.email || ''}`.padEnd(40, ' ').slice(0, 40),
+    padStartNumber(procedure.nationalId || TEN_BLANKS, 10, '0').slice(0, 10),
   ].join('')
 
   return entry

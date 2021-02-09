@@ -788,6 +788,121 @@ describe('BPA', () => {
         })[0]
         expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15 XXXXCXCXCXCX')
       })
+
+      it('should have patient address complement at 233-242', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(232, 10)).to.be.equal('          ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressComplement: 'Ap 15' } }],
+        })[0]
+        expect(entry.substr(232, 10)).to.be.equal('Ap 15     ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressComplement: 'Ap 15 perto de supermercado' } }],
+        })[0]
+        expect(entry.substr(232, 10)).to.be.equal('Ap 15 pert')
+      })
+
+      it('should have patient address number at 243-247', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(242, 5)).to.be.equal('     ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressNumber: '10' } }],
+        })[0]
+        expect(entry.substr(242, 5)).to.be.equal('10   ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressNumber: '12345678' } }],
+        })[0]
+        expect(entry.substr(242, 5)).to.be.equal('12345')
+      })
+
+      it('should have patient address district at 248-277', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(247, 30)).to.be.equal('                              ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressDistrict: 'Rio vermelho' } }],
+        })[0]
+        expect(entry.substr(247, 30)).to.be.equal('Rio vermelho                  ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { addressDistrict: 'Rio vermelho engenho velho da federação' } }],
+        })[0]
+        expect(entry.substr(247, 30)).to.be.equal('Rio vermelho engenho velho da ')
+      })
+
+      it('should have patient phone at 278-288', () => {
+        let entry = getIndividualEntries({
+          procedures: [{}],
+        })[0]
+        // // defaults to ' '
+        expect(entry.substr(277, 11)).to.be.equal('           ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { phone: '1234567' } }],
+        })[0]
+        expect(entry.substr(277, 11)).to.be.equal('1234567    ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { phone: '123-45 67' } }],
+        })[0]
+        expect(entry.substr(277, 11)).to.be.equal('1234567    ')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { phone: '12345678901234' } }],
+        })[0]
+        expect(entry.substr(277, 11)).to.be.equal('12345678901')
+      })
+    })
+
+    it('should have patient email at 289-328', () => {
+      let entry = getIndividualEntries({
+        procedures: [{}],
+      })[0]
+      // // defaults to ' '
+      expect(entry.substr(288, 40)).to.be.equal('                                        ')
+
+      entry = getIndividualEntries({
+        procedures: [{ patient: { email: 'xxxxxxxxxx@gmail.com' } }],
+      })[0]
+      expect(entry.substr(288, 40)).to.be.equal('xxxxxxxxxx@gmail.com                    ')
+
+      entry = getIndividualEntries({
+        procedures: [
+          { patient: { email: 'xxxxxxxxxxxxxxxx@gmailaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com' } },
+        ],
+      })[0]
+      expect(entry.substr(288, 40)).to.be.equal('xxxxxxxxxxxxxxxx@gmailaaaaaaaaaaaaaaaaaa')
+    })
+
+    it('should have national id at 329-338', () => {
+      let entry = getIndividualEntries({
+        procedures: [{}],
+      })[0]
+      // defaults to ' '
+      expect(entry.substr(328, 10)).to.be.equal('          ')
+
+      entry = getIndividualEntries({
+        procedures: [{ nationalId: 5 }],
+      })[0]
+      expect(entry.substr(328, 10)).to.be.equal('0000000005')
+
+      entry = getIndividualEntries({
+        procedures: [{ nationalId: 12345678901 }],
+      })[0]
+      expect(entry.substr(328, 10)).to.be.equal('1234567890')
     })
   })
 })
