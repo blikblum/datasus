@@ -9,15 +9,21 @@ const EMPTY_DATE = EIGHT_BLANKS
 
 const LINE_SEPARATOR = '\r\n'
 
-const getHeader = (competence, origin, destination, appInfo, { lineCount, sheetCount }) => {
-  const controlCode = 1111
+const getHeader = (
+  competence,
+  origin,
+  destination,
+  appInfo,
+  { lineCount, sheetCount, controlAccumulator }
+) => {
+  const controlCode = controlAccumulator % 1111
   const header = [
     '01#BPA#',
     padStartNumber(competence.year, 4, '0').slice(0, 4),
     padStartNumber(competence.month, 2, '0').slice(0, 2),
     padStartNumber(lineCount, 6, '0').slice(0, 6),
     padStartNumber(sheetCount, 6, '0').slice(0, 6),
-    `${controlCode}`,
+    `${controlCode}`.padStart(4, '0').slice(0, 4),
     origin.name.padEnd(30, ' ').slice(0, 30),
     origin.abbrev.padEnd(6, ' ').slice(0, 6),
     origin.cnpj.padStart(14, '0').slice(0, 14),
@@ -119,6 +125,10 @@ export const generateBPA = (
 
   const individualEntries = individual
     ? procedures.map((procedure, index) => {
+        const codeText = normalizeNumberText(procedure.code)
+        const code = parseInt(codeText, 10)
+        const quantity = procedure.quantity || 1
+        stats.controlAccumulator += code + quantity
         return getIndividualEntry(procedure, competence, origin, index)
       })
     : []

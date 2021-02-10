@@ -53,12 +53,6 @@ describe('BPA', () => {
 
       expect(header.substr(7, 6), 'Ano e mês de Processamento da produção').to.be.equal('202001')
 
-      expect(header.substr(13, 6), 'Número de linhas do BPA gravadas').to.be.equal('000000')
-
-      expect(header.substr(19, 6), 'Quantidades de folhas de BPA gravadas').to.be.equal('000000')
-
-      expect(header.substr(25, 4), 'Campo de controle').to.be.equal('1111')
-
       expect(
         header.substr(29, 30),
         'Nome do órgão de origem responsável pela informação'
@@ -141,6 +135,27 @@ describe('BPA', () => {
 
         header = getHeader({ procedures: new Array(21).fill({}, 0) }, { individual: false })
         expect(header.substr(19, 6)).to.be.equal('000002')
+      })
+
+      it('should have control code at 26-29', () => {
+        let header = getHeader({ procedures: [{ code: '03.02.04.005-6', quantity: 1 }] })
+        // code 0302040056 + 1 % 1111
+        expect(header.substr(25, 4)).to.be.equal(`${(302040056 + 1) % 1111}`.padStart(4, '0'))
+
+        header = getHeader({ procedures: [{ code: '03.02.04.005-6', quantity: 2 }] })
+        // code 0302040056 + 2 % 1111
+        expect(header.substr(25, 4)).to.be.equal(`${(302040056 + 2) % 1111}`.padStart(4, '0'))
+
+        // code 0302040056 + 0302060022 + 3 % 1111
+        header = getHeader({
+          procedures: [
+            { code: '03.02.04.005-6', quantity: 2 },
+            { code: '03.02.06.002-2', quantity: 1 },
+          ],
+        })
+        expect(header.substr(25, 4)).to.be.equal(
+          `${(302040056 + 302060022 + 3) % 1111}`.padStart(4, '0')
+        )
       })
     })
 
