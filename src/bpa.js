@@ -1,20 +1,22 @@
 import { normalizeNumberText, padStartNumber } from './utils.js'
 import { differenceInYears, format } from 'date-fns'
 
-const ENTRY_PER_SHEET = 20
+const ENTRIES_PER_SHEET = 20
 const THREE_BLANKS = '   '
 const EIGHT_BLANKS = '        '
 const TEN_BLANKS = '          '
 const EMPTY_DATE = EIGHT_BLANKS
 
-const getHeader = (competence, origin, destination, appInfo, { lineCount, pageCount }) => {
+const LINE_SEPARATOR = '\r\n'
+
+const getHeader = (competence, origin, destination, appInfo, { lineCount, sheetCount }) => {
   const controlCode = 1111
   const header = [
     '01#BPA#',
     padStartNumber(competence.year, 4, '0').slice(0, 4),
     padStartNumber(competence.month, 2, '0').slice(0, 2),
     padStartNumber(lineCount, 6, '0').slice(0, 6),
-    padStartNumber(pageCount, 6, '0').slice(0, 6),
+    padStartNumber(sheetCount, 6, '0').slice(0, 6),
     `${controlCode}`,
     origin.name.padEnd(30, ' ').slice(0, 30),
     origin.abbrev.padEnd(6, ' ').slice(0, 6),
@@ -29,8 +31,8 @@ const getHeader = (competence, origin, destination, appInfo, { lineCount, pageCo
 
 const getConsolidatedEntry = (procedure, competence, origin, index) => {
   const { patient = {} } = procedure
-  const sheetNumber = Math.trunc(index / ENTRY_PER_SHEET) + 1
-  const sequentialNumber = (index % ENTRY_PER_SHEET) + 1
+  const sheetNumber = Math.trunc(index / ENTRIES_PER_SHEET) + 1
+  const sequentialNumber = (index % ENTRIES_PER_SHEET) + 1
   const age = patient.birthDate ? differenceInYears(new Date(), patient.birthDate) : 0
   const entry = [
     '02',
@@ -51,8 +53,8 @@ const getConsolidatedEntry = (procedure, competence, origin, index) => {
 
 const getIndividualEntry = (procedure, competence, origin, index) => {
   const { patient = {} } = procedure
-  const sheetNumber = Math.trunc(index / ENTRY_PER_SHEET) + 1
-  const sequentialNumber = (index % ENTRY_PER_SHEET) + 1
+  const sheetNumber = Math.trunc(index / ENTRIES_PER_SHEET) + 1
+  const sequentialNumber = (index % ENTRIES_PER_SHEET) + 1
   const age = patient.birthDate ? differenceInYears(new Date(), patient.birthDate) : 0
   const birthDate = patient.birthDate ? format(patient.birthDate, 'yyyyMMdd') : EMPTY_DATE
   const date = procedure.date ? format(procedure.date, 'yyyyMMdd') : EMPTY_DATE
@@ -100,25 +102,35 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
   return entry
 }
 
-export const generateBPA = ({
-  procedures = [],
-  origin = {},
-  destination = {},
-  competence = {},
-  appInfo = '',
-} = {}) => {
-  const lineCount = 0
-  const pageCount = 0
+export const generateBPA = (
+  { procedures = [], origin = {}, destination = {}, competence = {}, appInfo = '' } = {},
+  { consolidated = true, individual = true } = {}
+) => {
+  const stats = { lineCount: 0, sheetCount: 0, controlAccumulator: 0 }
 
-  const consolidatedEntries = procedures.map((procedure, index) => {
-    return getConsolidatedEntry(procedure, competence, origin, index)
-  })
+  const consolidatedEntries = consolidated
+    ? procedures.map((procedure, index) => {
+        return getConsolidatedEntry(procedure, competence, origin, index)
+      })
+    : []
 
-  const inidividualEntries = procedures.map((procedure, index) => {
-    return getIndividualEntry(procedure, competence, origin, index)
-  })
+  stats.lineCount += consolidatedEntries.length
+  stats.sheetCount += Math.ceil(consolidatedEntries.length / ENTRIES_PER_SHEET)
 
-  const header = getHeader(competence, origin, destination, appInfo, { lineCount, pageCount })
+  const individualEntries = individual
+    ? procedures.map((procedure, index) => {
+        return getIndividualEntry(procedure, competence, origin, index)
+      })
+    : []
 
-  return header + '\n' + consolidatedEntries.join('\n') + '\n' + inidividualEntries.join('\n')
+  stats.lineCount += individualEntries.length
+  stats.sheetCount += Math.ceil(individualEntries.length / ENTRIES_PER_SHEET)
+
+  const header = getHeader(competence, origin, destination, appInfo, stats)
+
+  return [
+    header,
+    consolidatedEntries.join(LINE_SEPARATOR),
+    individualEntries.join(LINE_SEPARATOR),
+  ].join(LINE_SEPARATOR)
 }

@@ -25,21 +25,21 @@ const getDefaultBPAOptions = () => {
   }
 }
 
-const getHeader = (options) => {
-  const mergedOptions = defaultsDeep({ ...options }, getDefaultBPAOptions())
-  return generateBPA(mergedOptions).split('\n')[0]
+const getHeader = (data, options) => {
+  const mergedData = defaultsDeep({ ...data }, getDefaultBPAOptions())
+  return generateBPA(mergedData, options).split('\r\n')[0]
 }
 
-const getConsolidatedEntries = (options) => {
-  const mergedOptions = defaultsDeep({ ...options }, getDefaultBPAOptions())
-  const lines = generateBPA(mergedOptions).split('\n')
-  return lines.slice(1, mergedOptions.procedures.length + 1)
+const getConsolidatedEntries = (data, options) => {
+  const mergedData = defaultsDeep({ ...data }, getDefaultBPAOptions())
+  const lines = generateBPA(mergedData, options).split('\r\n')
+  return lines.slice(1, mergedData.procedures.length + 1)
 }
 
-const getIndividualEntries = (options) => {
-  const mergedOptions = defaultsDeep({ ...options }, getDefaultBPAOptions())
-  const lines = generateBPA(mergedOptions).split('\n')
-  return lines.slice(mergedOptions.procedures.length + 1, mergedOptions.procedures.length * 2 + 1)
+const getIndividualEntries = (data, options) => {
+  const mergedData = defaultsDeep({ ...data }, getDefaultBPAOptions())
+  const lines = generateBPA(mergedData, options).split('\r\n')
+  return lines.slice(mergedData.procedures.length + 1, mergedData.procedures.length * 2 + 1)
 }
 
 describe('BPA', () => {
@@ -82,6 +82,66 @@ describe('BPA', () => {
       expect(header.substr(120, 10), 'Versão do sistema').to.be.equal('MYAPP     ')
 
       //expect(header.substr(130, 2), 'Fim do cabeçalho').to.be.equal('01')
+    })
+
+    describe('header', () => {
+      it('should have line count at 14-19', () => {
+        let header = getHeader({ procedures: [{}] })
+        expect(header.substr(13, 6)).to.be.equal('000002')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) })
+        expect(header.substr(13, 6)).to.be.equal('000040')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) })
+        expect(header.substr(13, 6)).to.be.equal('000042')
+
+        header = getHeader({ procedures: [{}] }, { consolidated: false })
+        expect(header.substr(13, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) }, { consolidated: false })
+        expect(header.substr(13, 6)).to.be.equal('000020')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) }, { consolidated: false })
+        expect(header.substr(13, 6)).to.be.equal('000021')
+
+        header = getHeader({ procedures: [{}] }, { individual: false })
+        expect(header.substr(13, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) }, { individual: false })
+        expect(header.substr(13, 6)).to.be.equal('000020')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) }, { individual: false })
+        expect(header.substr(13, 6)).to.be.equal('000021')
+      })
+
+      it('should have sheet count at 20-25', () => {
+        let header = getHeader({ procedures: [{}] })
+        expect(header.substr(19, 6)).to.be.equal('000002')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) })
+        expect(header.substr(19, 6)).to.be.equal('000002')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) })
+        expect(header.substr(19, 6)).to.be.equal('000004')
+
+        header = getHeader({ procedures: [{}] }, { consolidated: false })
+        expect(header.substr(19, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) }, { consolidated: false })
+        expect(header.substr(19, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) }, { consolidated: false })
+        expect(header.substr(19, 6)).to.be.equal('000002')
+
+        header = getHeader({ procedures: [{}] }, { individual: false })
+        expect(header.substr(19, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(20).fill({}, 0) }, { individual: false })
+        expect(header.substr(19, 6)).to.be.equal('000001')
+
+        header = getHeader({ procedures: new Array(21).fill({}, 0) }, { individual: false })
+        expect(header.substr(19, 6)).to.be.equal('000002')
+      })
     })
 
     describe('consolidated entries', () => {
