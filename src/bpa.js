@@ -9,6 +9,12 @@ const EMPTY_DATE = EIGHT_BLANKS
 
 const LINE_SEPARATOR = '\r\n'
 
+const formatCompetence = (competence) => {
+  const date = competence instanceof Date ? competence : new Date(competence.year, competence.month)
+
+  return format(date, 'yyyyMM')
+}
+
 const getHeader = (
   competence,
   origin,
@@ -19,8 +25,7 @@ const getHeader = (
   const controlCode = controlAccumulator % 1111
   const header = [
     '01#BPA#',
-    padStartNumber(competence.year, 4, '0').slice(0, 4),
-    padStartNumber(competence.month, 2, '0').slice(0, 2),
+    formatCompetence(competence),
     padStartNumber(lineCount, 6, '0').slice(0, 6),
     padStartNumber(sheetCount, 6, '0').slice(0, 6),
     `${controlCode}`.padStart(4, '0').slice(0, 4),
@@ -43,8 +48,7 @@ const getConsolidatedEntry = (procedure, competence, origin, index) => {
   const entry = [
     '02',
     padStartNumber(origin.cnes, 7, '0').slice(0, 7),
-    padStartNumber(competence.year, 4, '0').slice(0, 4),
-    padStartNumber(competence.month, 2, '0').slice(0, 2),
+    formatCompetence(competence),
     `${procedure.cbo || ''}`.padStart(6, ' ').slice(0, 6),
     padStartNumber(sheetNumber, 3, '0'),
     padStartNumber(sequentialNumber, 2, '0'),
@@ -67,8 +71,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
   const entry = [
     '03',
     padStartNumber(origin.cnes, 7, '0').slice(0, 7),
-    padStartNumber(competence.year, 4, '0').slice(0, 4),
-    padStartNumber(competence.month, 2, '0').slice(0, 2),
+    formatCompetence(competence),
     `${procedure.cns || ''}`.padStart(15, ' ').slice(0, 15),
     `${procedure.cbo || ''}`.padStart(6, ' ').slice(0, 6),
     date,

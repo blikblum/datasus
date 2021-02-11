@@ -19,7 +19,7 @@ const getDefaultBPAOptions = () => {
 
     appInfo: 'MYAPP',
 
-    competence: { year: 2020, month: 1 },
+    competence: { year: 2020, month: 0 },
 
     procedures: [],
   }
@@ -51,8 +51,6 @@ describe('BPA', () => {
 
       expect(header.substr(2, 5), 'Indicador de início do cabeçalho').to.be.equal('#BPA#')
 
-      expect(header.substr(7, 6), 'Ano e mês de Processamento da produção').to.be.equal('202001')
-
       expect(
         header.substr(29, 30),
         'Nome do órgão de origem responsável pela informação'
@@ -79,6 +77,34 @@ describe('BPA', () => {
     })
 
     describe('header', () => {
+      it('should have competence at 8-13', () => {
+        let header = getHeader({
+          competence: {
+            year: 2021,
+            month: 0,
+          },
+        })
+        expect(header.substr(7, 6)).to.be.equal('202101')
+
+        header = getHeader({
+          competence: {
+            year: 2019,
+            month: 10,
+          },
+        })
+        expect(header.substr(7, 6)).to.be.equal('201911')
+
+        header = getHeader({
+          competence: new Date(2021, 0),
+        })
+        expect(header.substr(7, 6)).to.be.equal('202101')
+
+        header = getHeader({
+          competence: new Date(2019, 10),
+        })
+        expect(header.substr(7, 6)).to.be.equal('201911')
+      })
+
       it('should have line count at 14-19', () => {
         let header = getHeader({ procedures: [{}] })
         expect(header.substr(13, 6)).to.be.equal('000002')
@@ -180,23 +206,35 @@ describe('BPA', () => {
       })
 
       it('should have competence at 10-15', () => {
-        const entry = getConsolidatedEntries({
+        let entry = getConsolidatedEntries({
           procedures: [{}],
           competence: {
             year: 2021,
-            month: 1,
+            month: 0,
           },
         })[0]
         expect(entry.substr(9, 6)).to.be.equal('202101')
 
-        const entry2 = getConsolidatedEntries({
+        entry = getConsolidatedEntries({
           procedures: [{}],
           competence: {
             year: 2019,
-            month: 11,
+            month: 10,
           },
         })[0]
-        expect(entry2.substr(9, 6)).to.be.equal('201911')
+        expect(entry.substr(9, 6)).to.be.equal('201911')
+
+        entry = getConsolidatedEntries({
+          procedures: [{}],
+          competence: new Date(2021, 0),
+        })[0]
+        expect(entry.substr(9, 6)).to.be.equal('202101')
+
+        entry = getConsolidatedEntries({
+          procedures: [{}],
+          competence: new Date(2019, 10),
+        })[0]
+        expect(entry.substr(9, 6)).to.be.equal('201911')
       })
 
       it('should have cbo at 16-21', () => {
@@ -332,26 +370,50 @@ describe('BPA', () => {
           origin: { cnes: 1234567 },
         })[0]
         expect(entry.substr(2, 7)).to.be.equal('1234567')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
+          origin: { cnes: '1234' },
+        })[0]
+        expect(entry.substr(2, 7)).to.be.equal('0001234')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
+          origin: { cnes: '1234567' },
+        })[0]
+        expect(entry.substr(2, 7)).to.be.equal('1234567')
       })
 
       it('should have competence at 10-15', () => {
-        const entry = getIndividualEntries({
+        let entry = getIndividualEntries({
           procedures: [{}],
           competence: {
             year: 2021,
-            month: 1,
+            month: 0,
           },
         })[0]
         expect(entry.substr(9, 6)).to.be.equal('202101')
 
-        const entry2 = getIndividualEntries({
+        entry = getIndividualEntries({
           procedures: [{}],
           competence: {
             year: 2019,
-            month: 11,
+            month: 10,
           },
         })[0]
-        expect(entry2.substr(9, 6)).to.be.equal('201911')
+        expect(entry.substr(9, 6)).to.be.equal('201911')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
+          competence: new Date(2021, 0),
+        })[0]
+        expect(entry.substr(9, 6)).to.be.equal('202101')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
+          competence: new Date(2019, 10),
+        })[0]
+        expect(entry.substr(9, 6)).to.be.equal('201911')
       })
 
       it('should have cns at 16-30', () => {
