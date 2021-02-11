@@ -78,7 +78,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     `${patient.cns || ''}`.padStart(15, ' ').slice(0, 15),
     (patient.gender || ' ').slice(0, 1).slice(0, 1),
     `${patient.ibge || ''}`.padEnd(6, ' ').slice(0, 6),
-    `${patient.cid || ''}`.padEnd(4, ' ').slice(0, 4),
+    `${procedure.cid || ''}`.padEnd(4, ' ').slice(0, 4),
     padStartNumber(age, 3, '0').slice(0, 3),
     padStartNumber(procedure.quantity, 6, '0').slice(0, 6),
     padStartNumber(procedure.character || 1, 2, '0').slice(0, 2),

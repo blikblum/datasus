@@ -527,17 +527,17 @@ describe('BPA', () => {
         expect(entry.substr(81, 4)).to.be.equal('    ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { cid: 'E11' } }],
+          procedures: [{ cid: 'E11' }],
         })[0]
         expect(entry.substr(81, 4)).to.be.equal('E11 ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { cid: 'E112' } }],
+          procedures: [{ cid: 'E112' }],
         })[0]
         expect(entry.substr(81, 4)).to.be.equal('E112')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { cid: 'E112', ibge: 1234567 } }],
+          procedures: [{ cid: 'E112', patient: { ibge: 1234567 } }],
         })[0]
         expect(entry.substr(81, 4)).to.be.equal('E112')
       })
