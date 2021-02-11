@@ -1,6 +1,6 @@
 {
   "name": "datasus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Library with helpers for datasus",
   "type": "module",
   "repository": "blikblum/datasus",
