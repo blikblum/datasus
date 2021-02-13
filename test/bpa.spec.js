@@ -7,7 +7,6 @@ const getDefaultBPAOptions = () => {
   return {
     origin: {
       name: 'Hospital XYZ',
-      cnpj: '12345678901234',
       cnes: 97864,
       abbrev: 'HOSXYZ',
     },
@@ -60,10 +59,6 @@ describe('BPA', () => {
         header.substr(59, 6),
         'Sigla do órgão de origem responsável pela digitação'
       ).to.be.equal('HOSXYZ')
-
-      expect(header.substr(65, 14), 'CGC/CPF do prestador ou do órgão público').to.be.equal(
-        '12345678901234'
-      )
 
       expect(header.substr(79, 40), 'Nome do órgão de saúde destino do arquivo').to.be.equal(
         'SEC ESTADUAL                            '
@@ -182,6 +177,26 @@ describe('BPA', () => {
         expect(header.substr(25, 4)).to.be.equal(
           `${(302040056 + 302060022 + 3) % 1111}`.padStart(4, '0')
         )
+      })
+
+      it('should have cnpj or cpf at 66-79', () => {
+        let header = getHeader({})
+        expect(header.substr(65, 14)).to.be.equal('00000000000000')
+
+        header = getHeader({ origin: { cnpj: '123' } })
+        expect(header.substr(65, 14)).to.be.equal('00000000000123')
+
+        header = getHeader({ origin: { cnpj: 123 } })
+        expect(header.substr(65, 14)).to.be.equal('00000000000123')
+
+        header = getHeader({ origin: { cpf: 123 } })
+        expect(header.substr(65, 14)).to.be.equal('00000000000123')
+
+        header = getHeader({ origin: { cpf: '123' } })
+        expect(header.substr(65, 14)).to.be.equal('00000000000123')
+
+        header = getHeader({ origin: { cnpj: '12.319.513/0001-25' } })
+        expect(header.substr(65, 14)).to.be.equal('12319513000125')
       })
     })
 
@@ -580,7 +595,7 @@ describe('BPA', () => {
         expect(entry.substr(75, 6)).to.be.equal('123456')
       })
 
-      it('should have patient cid at 82-85', () => {
+      it('should have cid at 82-85', () => {
         let entry = getIndividualEntries({
           procedures: [{}],
         })[0]
