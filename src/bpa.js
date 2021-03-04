@@ -31,7 +31,9 @@ const getHeader = (
     `${controlCode}`.padStart(4, '0').slice(0, 4),
     `${origin.name || ''}`.padEnd(30, ' ').slice(0, 30),
     `${origin.abbrev || ''}`.padEnd(6, ' ').slice(0, 6),
-    normalizeNumberText(origin.cnpj || origin.cpf).padStart(14, '0').slice(0, 14),
+    normalizeNumberText(origin.cnpj || origin.cpf)
+      .padStart(14, '0')
+      .slice(0, 14),
     `${destination.name || ''}`.padEnd(40, ' ').slice(0, 40),
     (destination.indicator || '').slice(0, 1),
     appInfo.padEnd(10, ' ').slice(0, 10),
@@ -141,9 +143,13 @@ export const generateBPA = (
 
   const header = getHeader(competence, origin, destination, appInfo, stats)
 
-  return [
-    header,
-    consolidatedEntries.join(LINE_SEPARATOR),
-    individualEntries.join(LINE_SEPARATOR),
-  ].join(LINE_SEPARATOR)
+  const content = [header]
+  if (consolidated) {
+    content.push(consolidatedEntries.join(LINE_SEPARATOR))
+  }
+  if (individual) {
+    content.push(individualEntries.join(LINE_SEPARATOR))
+  }
+
+  return content.join(LINE_SEPARATOR)
 }

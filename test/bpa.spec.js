@@ -41,6 +41,11 @@ const getIndividualEntries = (data, options) => {
   return lines.slice(mergedData.procedures.length + 1, mergedData.procedures.length * 2 + 1)
 }
 
+const getBpaLines = (data, options) => {
+  const mergedData = defaultsDeep({ ...data }, getDefaultBPAOptions())
+  return generateBPA(mergedData, options).split('\r\n')
+}
+
 describe('BPA', () => {
   describe('generateBPA', () => {
     it('should create a correct header', () => {
@@ -368,6 +373,13 @@ describe('BPA', () => {
     })
 
     describe('individual entries', () => {
+      it('should have no empty lines when consolidated is false', () => {
+        const lines = getBpaLines({ procedures: [{}] }, { consolidated: false })
+        expect(lines.length).to.be.equal(2)
+        expect(lines[0]).to.not.be.empty
+        expect(lines[1]).to.not.be.empty
+      })
+
       it('should have a identification code at 1-2', () => {
         const entry = getIndividualEntries({ procedures: [{}] })[0]
         expect(entry.substr(0, 2)).to.be.equal('03')
