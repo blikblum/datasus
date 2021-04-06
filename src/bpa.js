@@ -29,7 +29,7 @@ const getHeader = (
     padStartNumber(lineCount, 6, '0').slice(0, 6),
     padStartNumber(sheetCount, 6, '0').slice(0, 6),
     `${controlCode}`.padStart(4, '0').slice(0, 4),
-    `${origin.name || ''}`.padEnd(30, ' ').slice(0, 30),
+    `${removeAccents(origin.name)}`.padEnd(30, ' ').slice(0, 30),
     `${origin.abbrev || ''}`.padEnd(6, ' ').slice(0, 6),
     normalizeNumberText(origin.cnpj || origin.cpf)
       .padStart(14, '0')

@@ -6,7 +6,6 @@ import { generateBPA } from '../src/bpa.js'
 const getDefaultBPAOptions = () => {
   return {
     origin: {
-      name: 'Hospital XYZ',
       cnes: 97864,
       abbrev: 'HOSXYZ',
     },
@@ -54,11 +53,6 @@ describe('BPA', () => {
       expect(header.substr(0, 2), 'Indicador de linha do Header').to.be.equal('01')
 
       expect(header.substr(2, 5), 'Indicador de início do cabeçalho').to.be.equal('#BPA#')
-
-      expect(
-        header.substr(29, 30),
-        'Nome do órgão de origem responsável pela informação'
-      ).to.be.equal('Hospital XYZ                  ')
 
       expect(
         header.substr(59, 6),
@@ -184,7 +178,21 @@ describe('BPA', () => {
         )
       })
 
-      it('should have cnpj or cpf at 66-79', () => {
+      it('should have origin name or cpf at 30-59', () => {
+        let header = getHeader({})
+        expect(header.substr(29, 30)).to.be.equal('                              ')
+
+        header = getHeader({ origin: { name: 'Hospital XYZ' } })
+        expect(header.substr(29, 30)).to.be.equal('Hospital XYZ                  ')
+
+        header = getHeader({ origin: { name: 'Hospital Arão' } })
+        expect(header.substr(29, 30)).to.be.equal('Hospital Arao                 ')
+
+        header = getHeader({ origin: { name: 'Hospital XYZ KKKKKKKKKKKKKKKKKKKKAAAAAAA' } })
+        expect(header.substr(29, 30)).to.be.equal('Hospital XYZ KKKKKKKKKKKKKKKKK')
+      })
+
+      it('should have origin cnpj or cpf at 66-79', () => {
         let header = getHeader({})
         expect(header.substr(65, 14)).to.be.equal('00000000000000')
 
