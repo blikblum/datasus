@@ -72,7 +72,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
   const date = procedure.date ? format(procedure.date, 'yyyyMMdd') : EMPTY_DATE
   const entry = [
     '03',
-    padStartNumber(origin.cnes, 7, '0').slice(0, 7),
+    padStartNumber(normalizeNumberText(origin.cnes), 7, '0').slice(0, 7),
     formatCompetence(competence),
     `${procedure.cns || ''}`.padStart(15, ' ').slice(0, 15),
     `${procedure.cbo || ''}`.padStart(6, ' ').slice(0, 6),

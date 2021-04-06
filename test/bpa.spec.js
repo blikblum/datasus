@@ -406,6 +406,18 @@ describe('BPA', () => {
 
         entry = getIndividualEntries({
           procedures: [{}],
+          origin: { cnes: '\t1234\t' },
+        })[0]
+        expect(entry.substr(2, 7)).to.be.equal('0001234')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
+          origin: { cnes: ' 1234 ' },
+        })[0]
+        expect(entry.substr(2, 7)).to.be.equal('0001234')
+
+        entry = getIndividualEntries({
+          procedures: [{}],
           origin: { cnes: '1234567' },
         })[0]
         expect(entry.substr(2, 7)).to.be.equal('1234567')
