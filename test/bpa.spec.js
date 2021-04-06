@@ -769,17 +769,17 @@ describe('BPA', () => {
         entry = getIndividualEntries({
           procedures: [{ patient: { name: 'Luiz Américo' } }],
         })[0]
-        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo                  ')
+        expect(entry.substr(112, 30)).to.be.equal('Luiz Americo                  ')
 
         entry = getIndividualEntries({
           procedures: [{ patient: { name: 'Luiz Américo Pereira Camara da Silva Sauro' } }],
         })[0]
-        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo Pereira Camara da')
+        expect(entry.substr(112, 30)).to.be.equal('Luiz Americo Pereira Camara da')
 
         entry = getIndividualEntries({
-          procedures: [{ origin: 'BPAX', patient: { name: 'Luiz Américo' } }],
+          procedures: [{ origin: 'BPAX', patient: { name: 'LUIZ AMÉRICO' } }],
         })[0]
-        expect(entry.substr(112, 30)).to.be.equal('Luiz Américo                  ')
+        expect(entry.substr(112, 30)).to.be.equal('LUIZ AMERICO                  ')
       })
 
       it('should have patient birthDate at 143-150', () => {
@@ -955,14 +955,14 @@ describe('BPA', () => {
         expect(entry.substr(202, 30)).to.be.equal('                              ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { address: 'Rua bartolomeu 15' } }],
+          procedures: [{ patient: { address: 'Rua bartolómeu 15' } }],
         })[0]
         expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15             ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { address: 'Rua bartolomeu 15 XXXXCXCXCXCXAAAAAA' } }],
+          procedures: [{ patient: { address: 'Rua bartolomeu 15 ÃXXXCXCXCXCXAAAAAA' } }],
         })[0]
-        expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15 XXXXCXCXCXCX')
+        expect(entry.substr(202, 30)).to.be.equal('Rua bartolomeu 15 AXXXCXCXCXCX')
       })
 
       it('should have patient address complement at 233-242', () => {
@@ -973,12 +973,12 @@ describe('BPA', () => {
         expect(entry.substr(232, 10)).to.be.equal('          ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { addressComplement: 'Ap 15' } }],
+          procedures: [{ patient: { addressComplement: 'Áp 15' } }],
         })[0]
         expect(entry.substr(232, 10)).to.be.equal('Ap 15     ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { addressComplement: 'Ap 15 perto de supermercado' } }],
+          procedures: [{ patient: { addressComplement: 'Áp 15 perto de supermercado' } }],
         })[0]
         expect(entry.substr(232, 10)).to.be.equal('Ap 15 pert')
       })
@@ -1009,12 +1009,12 @@ describe('BPA', () => {
         expect(entry.substr(247, 30)).to.be.equal('                              ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { addressDistrict: 'Rio vermelho' } }],
+          procedures: [{ patient: { addressDistrict: 'Rio vérmelho' } }],
         })[0]
         expect(entry.substr(247, 30)).to.be.equal('Rio vermelho                  ')
 
         entry = getIndividualEntries({
-          procedures: [{ patient: { addressDistrict: 'Rio vermelho engenho velho da federação' } }],
+          procedures: [{ patient: { addressDistrict: 'Rio vérmelho engenho velho da federação' } }],
         })[0]
         expect(entry.substr(247, 30)).to.be.equal('Rio vermelho engenho velho da ')
       })
