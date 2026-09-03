@@ -5,6 +5,7 @@ const ENTRIES_PER_SHEET = 20
 const THREE_BLANKS = '   '
 const EIGHT_BLANKS = '        '
 const TEN_BLANKS = '          '
+const ELEVEN_BLANKS = '           '
 const EMPTY_DATE = EIGHT_BLANKS
 
 const LINE_SEPARATOR = '\r\n'
@@ -20,7 +21,7 @@ const getHeader = (
   origin,
   destination,
   appInfo,
-  { lineCount, sheetCount, controlAccumulator }
+  { lineCount, sheetCount, controlAccumulator },
 ) => {
   const controlCode = controlAccumulator % 1111
   const header = [
@@ -108,6 +109,9 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     normalizeNumberText(patient.phone).padEnd(11, ' ').slice(0, 11),
     `${patient.email || ''}`.padEnd(40, ' ').slice(0, 40),
     padStartNumber(procedure.nationalId || TEN_BLANKS, 10, '0').slice(0, 10),
+    procedure.cpf || ELEVEN_BLANKS,
+    ' ', // situação de rua
+    procedure.cpf ? 'N' : 'S' // sem CPF
   ].join('')
 
   return entry
@@ -115,7 +119,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
 
 export const generateBPA = (
   { procedures = [], origin = {}, destination = {}, competence = {}, appInfo = '' } = {},
-  { consolidated = true, individual = true } = {}
+  { consolidated = true, individual = true } = {},
 ) => {
   const stats = { lineCount: 0, sheetCount: 0, controlAccumulator: 0 }
 

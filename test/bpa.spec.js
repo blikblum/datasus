@@ -1088,5 +1088,45 @@ describe('BPA', () => {
       })[0]
       expect(entry.substr(328, 10)).to.be.equal('1234567890')
     })
+
+    it('should have cpf at 339-350', () => {
+      let entry = getIndividualEntries({
+        procedures: [{}],
+      })[0]
+      // defaults to ' '
+      expect(entry.substr(338, 11)).to.be.equal('           ')
+
+      entry = getIndividualEntries({
+        procedures: [{ cpf: '12345678901' }],
+      })[0]
+      expect(entry.substr(338, 11)).to.be.equal('12345678901')
+    })
+
+    it('should have situação de rua at 351', () => {
+      // blank for now
+      let entry = getIndividualEntries({
+        procedures: [{}],
+      })[0]
+      // defaults to ' '
+      expect(entry.substr(349, 1)).to.be.equal(' ')
+    })
+
+    it('should have "no CPF" flag at 352', () => {
+      let entry = getIndividualEntries({
+        procedures: [{}],
+      })[0]
+
+      expect(entry.substr(350, 1)).to.be.equal('S')
+
+      entry = getIndividualEntries({
+        procedures: [
+          {
+            cpf: '12345678901',
+          },
+        ],
+      })[0]
+
+      expect(entry.substr(350, 1)).to.be.equal('N')
+    })
   })
 })
