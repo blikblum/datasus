@@ -95,8 +95,8 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     padStartNumber(patient.race || 99, 2, '0').slice(0, 2),
     `${patient.ethnicity || ''}`.padEnd(4, ' ').slice(0, 4),
     padStartNumber(patient.nationality || 10, 3, '0').slice(0, 3),
-    THREE_BLANKS, // service code
-    THREE_BLANKS, // classification code
+    `${procedure.serviceCode || THREE_BLANKS}`.padStart(3, '0').slice(0, 3), // service code
+    `${procedure.classification || THREE_BLANKS}`.padStart(3, '0').slice(0, 3), // classification code
     EIGHT_BLANKS, // sequence code
     ' '.repeat(4), // area code
     ' '.repeat(14), // maintainer cnpj
