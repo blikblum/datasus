@@ -1097,7 +1097,7 @@ describe('BPA', () => {
       expect(entry.substr(338, 11)).to.be.equal('           ')
 
       entry = getIndividualEntries({
-        procedures: [{ cpf: '12345678901' }],
+        procedures: [{ patient: { cpf: '12345678901' } }],
       })[0]
       expect(entry.substr(338, 11)).to.be.equal('12345678901')
     })
@@ -1121,7 +1121,7 @@ describe('BPA', () => {
       entry = getIndividualEntries({
         procedures: [
           {
-            cpf: '12345678901',
+            patient: { cpf: '12345678901' },
           },
         ],
       })[0]
