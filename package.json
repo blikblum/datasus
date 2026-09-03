@@ -1,6 +1,6 @@
 {
   "name": "datasus",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "Library with helpers for datasus",
   "type": "module",
   "repository": "blikblum/datasus",
@@ -26,9 +26,7 @@
   "scripts": {
     "lint": "eslint src test tools",
     "test": "mocha test/*.spec.js",
-    "test:watch": "mocha --watch --parallel test/*.spec.js",
-    "build": "node tools/build.cjs",
-    "prepublishOnly": "npm run build"
+    "test:watch": "mocha --watch --parallel test/*.spec.js"
   },
   "dependencies": {
     "date-fns": "^4.4.0"
