@@ -1,6 +1,6 @@
 {
   "name": "datasus",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Library with helpers for datasus",
   "type": "module",
   "repository": "blikblum/datasus",
@@ -24,7 +24,7 @@
     "sinon": "^9.2.4"
   },
   "scripts": {
-    "lint": "eslint src test tools",
+    "lint": "eslint src test",
     "test": "mocha test/*.spec.js",
     "test:watch": "mocha --watch --parallel test/*.spec.js"
   },
