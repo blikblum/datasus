@@ -110,7 +110,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     `${patient.email || ''}`.padEnd(40, ' ').slice(0, 40),
     padStartNumber(procedure.nationalId || TEN_BLANKS, 10, '0').slice(0, 10),
     patient.cpf || ELEVEN_BLANKS,
-    ' ', // situação de rua
+    patient.homeless ? 'S' : 'N', // situação de rua
     patient.cpf ? 'N' : 'S', // sem CPF
   ].join('')
 

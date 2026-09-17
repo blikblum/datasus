@@ -1107,8 +1107,13 @@ describe('BPA', () => {
       let entry = getIndividualEntries({
         procedures: [{}],
       })[0]
-      // defaults to ' '
-      expect(entry.substr(349, 1)).to.be.equal(' ')
+      // defaults to 'N'
+      expect(entry.substr(349, 1)).to.be.equal('N')
+
+      entry = getIndividualEntries({
+        procedures: [{ patient: { homeless: true } }],
+      })[0]
+      expect(entry.substr(349, 1)).to.be.equal('S')
     })
 
     it('should have "no CPF" flag at 352', () => {
