@@ -1,5 +1,5 @@
 const punctuationRegex = /\D/g
-const diacriticsRegex = /[\u0300-\u036f]/g
+const diacriticsRegex = /[\u0300-\u036f\u00b0]/g
 
 export const padStartNumber = (number = '', maxLength, fillString) => {
   return number.toString().padStart(maxLength, fillString)
