@@ -8,5 +8,6 @@
  */
 
 import { generateBPA } from './bpa.js'
+import { parseBPAErrorReport } from './bpa-error-report.js'
 
-export { generateBPA }
+export { generateBPA, parseBPAErrorReport }

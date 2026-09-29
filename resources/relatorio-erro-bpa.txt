@@ -1,0 +1,25 @@
+BDSIA202608b************************************************************ 06.04
+ SMS-XXXXXX          SISTEMA DE INFORMACOES AMBULATORIAIS      SAS/DATASUS/0350
+ 29/09/2026  RELATORIO DE OCORRENCIAS NA CONSISTENCIA - AGO/2026       15:50:38
+ ****************************************************************************** (s17,27H
+ CNES : 0000000 XXXXXXXX                          
+ TIPO COMPET. FL/SEQ         PROCED.    CBO    CNS PROFISS.  OCORRENCIA
+ 
+ BPAI 08/2026         002/20 0302040030 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         003/01 0302040056 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         003/02 0302060022 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         014/08 0302040030 223605 552083124090009 PESSOA EM SITUACAO DE RUA DEVE SER 'S'SIM OU 'N'NAO                            
+ BPAI 08/2026         014/09 0302040056 223605 552083124090009 PESSOA EM SITUACAO DE RUA DEVE SER 'S'SIM OU 'N'NAO                            
+ BPAI 08/2026         014/10 0302060022 223605 552083124090009 PESSOA EM SITUACAO DE RUA DEVE SER 'S'SIM OU 'N'NAO                            
+ BPAI 08/2026         017/02 0302040030 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         017/03 0302040056 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         017/04 0302060022 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         018/12 0302040030 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         018/13 0302040056 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         018/14 0302060022 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/01 0302040030 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/02 0302040056 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/03 0302060022 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/07 0302040030 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/08 0302040056 223605 552083124090009 CEP DO USUARIO INVALIDO                                                        
+ BPAI 08/2026         019/09 0302060022 223605 552083124090009 CEP DO USUARIO INVALIDO                                                  
