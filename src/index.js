@@ -7,7 +7,7 @@
  * LICENSE.txt file in the root directory of this source tree.
  */
 
-import { generateBPA } from './bpa.js'
+import { generateBPA, parseBPA } from './bpa.js'
 import { parseBPAErrorReport } from './bpa-error-report.js'
 
-export { generateBPA, parseBPAErrorReport }
+export { generateBPA, parseBPA, parseBPAErrorReport }
