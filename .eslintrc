@@ -18,6 +18,14 @@
       "env": {
         "mocha": true
       }
+    },
+    {
+      "files": [
+        "demo/main.js"
+      ],
+      "env": {
+        "browser": true
+      }
     }
   ],
   "rules": {}

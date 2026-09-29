@@ -18,6 +18,28 @@
 
 * [Getting Started](docs/getting-started.md)
 
+## Demonstração
+
+A página [Verificar erros](https://blikblum.github.io/datasus/) relaciona cada ocorrência
+BPAI de um relatório de consistência ao paciente e à linha física correspondente em uma
+exportação BPA. Os arquivos são processados somente no navegador e não são enviados a um servidor.
+
+Para rodar localmente:
+
+```sh
+yarn install
+yarn dev
+```
+
+Abra o endereço indicado pelo Vite. Para testar a versão pronta para publicação,
+execute `yarn build:demo` e `yarn preview:demo`. O build fica em `dist/`.
+
+A publicação no GitHub Pages é automática em cada push para `master` e também pode
+ser iniciada manualmente em **Actions → Deploy BPA demo to GitHub Pages**. Antes da
+primeira publicação, selecione **Settings → Pages → Build and deployment → Source:
+GitHub Actions** no repositório. A página usa o caminho `/datasus/`, correspondente
+a `https://blikblum.github.io/datasus/`.
+
 ### Get in Touch
 
 * [#datasus](https://gitter.im/blikblum/datasus) on Gitter

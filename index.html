@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Demonstração da biblioteca datasus para relacionar ocorrências de um relatório de erros aos pacientes de uma exportação BPA."
+    />
+    <title>Verificar erros de BPA · datasus</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./demo/styles.css" />
+    <script type="module" src="./demo/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#inicio" aria-label="datasus demo, início">
+        <span class="brand-mark" aria-hidden="true">d<span>.</span></span>
+        <span class="brand-name">datasus <span>demo</span></span>
+      </a>
+      <nav aria-label="Demonstrações">
+        <a class="nav-link" href="#verificar-erros" aria-current="page">Verificar erros</a>
+      </nav>
+    </header>
+
+    <main id="inicio">
+      <div class="page-shell">
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-line"></span> Ferramentas para BPA</p>
+            <h1 id="page-title">Encontre o paciente <em>por trás de cada erro.</em></h1>
+            <p class="hero-description">
+              Relacione as ocorrências do relatório de consistência com os registros da exportação
+              BPA. Veja o paciente e a linha exata do arquivo em um só lugar.
+            </p>
+          </div>
+          <div class="hero-aside" aria-label="Como funciona">
+            <span class="aside-number">01 / 01</span>
+            <div class="aside-rule"></div>
+            <p>Dois arquivos.<br /><strong>Uma leitura clara.</strong></p>
+            <span class="aside-arrow" aria-hidden="true">↘</span>
+          </div>
+        </section>
+
+        <section id="verificar-erros" class="workspace" aria-labelledby="section-title">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Demonstração 01</p>
+              <h2 id="section-title">Verificar erros</h2>
+            </div>
+            <p class="section-note">
+              Processamento local no navegador. Seus arquivos não são enviados.
+            </p>
+          </div>
+
+          <form id="check-form" class="upload-panel" novalidate>
+            <div class="file-grid">
+              <div class="file-field">
+                <label for="report-file">
+                  <span class="file-step">01 <span aria-hidden="true">/</span> RELATÓRIO</span>
+                  <span class="file-title">Relatório de erros</span>
+                  <span class="file-help">Selecione o relatório de ocorrências do BPA.</span>
+                </label>
+                <input id="report-file" name="report" type="file" aria-describedby="report-error" />
+                <p id="report-error" class="field-error" role="alert" hidden></p>
+              </div>
+              <div class="file-field">
+                <label for="export-file">
+                  <span class="file-step">02 <span aria-hidden="true">/</span> EXPORTAÇÃO</span>
+                  <span class="file-title">Exportação BPA</span>
+                  <span class="file-help"
+                    >Selecione o arquivo exportado com os registros dos pacientes.</span
+                  >
+                </label>
+                <input id="export-file" name="export" type="file" aria-describedby="export-error" />
+                <p id="export-error" class="field-error" role="alert" hidden></p>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <p>Compatível com texto UTF-8 e Windows-1252.</p>
+              <button id="check-button" class="primary-button" type="submit">
+                Relacionar erros <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </form>
+
+          <p id="analysis-error" class="analysis-error" role="alert" hidden></p>
+
+          <section id="results" class="results" aria-labelledby="results-title" hidden>
+            <div class="results-heading">
+              <div>
+                <p class="section-label">Análise concluída</p>
+                <h2 id="results-title">Ocorrências encontradas</h2>
+              </div>
+              <p id="results-caption" class="results-caption"></p>
+            </div>
+            <div class="summary-grid" aria-label="Resumo da análise">
+              <div class="summary-item">
+                <strong id="total-count">0</strong><span>ocorrências</span>
+              </div>
+              <div class="summary-item">
+                <strong id="matched-count">0</strong><span>identificadas</span>
+              </div>
+              <div class="summary-item">
+                <strong id="missing-count">0</strong><span>sem registro</span>
+              </div>
+              <div class="summary-item">
+                <strong id="ambiguous-count">0</strong><span>ambíguas</span>
+              </div>
+            </div>
+            <div id="result-list" class="result-list"></div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <span>datasus / demonstração da biblioteca</span>
+      <a href="https://github.com/blikblum/datasus"
+        >Ver código no GitHub <span aria-hidden="true">↗</span></a
+      >
+    </footer>
+  </body>
+</html>

@@ -12,7 +12,7 @@ describe('parseBPAErrorReport', () => {
 
     expect(occurrences).to.have.lengthOf(18)
     expect(occurrences[0]).to.deep.equal({
-      cnes: '2804891',
+      cnes: '0000000',
       type: 'BPAI',
       competence: '202608',
       sheetNumber: '002',
