@@ -95,9 +95,11 @@ BPAI rows. BPAC report rows are currently unsupported.
 
 ## Demo
 
-The [Check errors demo](https://blikblum.github.io/datasus/) links each BPAI occurrence
-in a consistency report to the corresponding patient and physical line in a BPA export.
-Files are processed entirely in the browser and are not sent to a server.
+The [browser demo](https://blikblum.github.io/datasus/) has two tabs. **Check errors** links
+BPAI occurrences in a consistency report to patients and physical lines in a BPA export.
+**View export** shows individual and consolidated records in separate, paginated tables,
+with the complete parsed data and original line available for each row. Files are processed
+entirely in the browser and are not sent to a server.
 
 To run the demo locally:
 

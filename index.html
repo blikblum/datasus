@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Demonstração da biblioteca datasus para relacionar ocorrências de um relatório de erros aos pacientes de uma exportação BPA."
+      content="Demonstração da biblioteca datasus para verificar erros e visualizar registros de exportações BPA."
     />
-    <title>Verificar erros de BPA · datasus</title>
+    <title>Ferramentas BPA · datasus</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="./demo/styles.css" />
     <script type="module" src="./demo/main.js"></script>
@@ -18,8 +18,29 @@
         <span class="brand-mark" aria-hidden="true">d<span>.</span></span>
         <span class="brand-name">datasus <span>demo</span></span>
       </a>
-      <nav aria-label="Demonstrações">
-        <a class="nav-link" href="#verificar-erros" aria-current="page">Verificar erros</a>
+      <nav class="demo-tabs" role="tablist" aria-label="Demonstrações">
+        <button
+          id="tab-check"
+          class="nav-tab"
+          type="button"
+          role="tab"
+          aria-controls="verificar-erros"
+          aria-selected="true"
+          tabindex="0"
+        >
+          Verificar erros
+        </button>
+        <button
+          id="tab-export"
+          class="nav-tab"
+          type="button"
+          role="tab"
+          aria-controls="visualizar-exportacao"
+          aria-selected="false"
+          tabindex="-1"
+        >
+          Visualizar exportação
+        </button>
       </nav>
     </header>
 
@@ -28,21 +49,27 @@
         <section class="hero" aria-labelledby="page-title">
           <div class="hero-copy">
             <p class="eyebrow"><span class="eyebrow-line"></span> Ferramentas para BPA</p>
-            <h1 id="page-title">Encontre o paciente <em>por trás de cada erro.</em></h1>
+            <h1 id="page-title">Leia sua exportação BPA <em>com mais clareza.</em></h1>
             <p class="hero-description">
-              Relacione as ocorrências do relatório de consistência com os registros da exportação
-              BPA. Veja o paciente e a linha exata do arquivo em um só lugar.
+              Relacione erros aos pacientes e explore os registros individuais e consolidados da
+              exportação. Tudo em um só lugar, direto no navegador.
             </p>
           </div>
           <div class="hero-aside" aria-label="Como funciona">
-            <span class="aside-number">01 / 01</span>
+            <span class="aside-number">02 / 02</span>
             <div class="aside-rule"></div>
-            <p>Dois arquivos.<br /><strong>Uma leitura clara.</strong></p>
+            <p>Duas ferramentas.<br /><strong>Uma leitura clara.</strong></p>
             <span class="aside-arrow" aria-hidden="true">↘</span>
           </div>
         </section>
 
-        <section id="verificar-erros" class="workspace" aria-labelledby="section-title">
+        <section
+          id="verificar-erros"
+          class="workspace"
+          role="tabpanel"
+          aria-labelledby="tab-check"
+          tabindex="0"
+        >
           <div class="section-heading">
             <div>
               <p class="section-label">Demonstração 01</p>
@@ -109,6 +136,93 @@
               </div>
             </div>
             <div id="result-list" class="result-list"></div>
+          </section>
+        </section>
+
+        <section
+          id="visualizar-exportacao"
+          class="workspace"
+          role="tabpanel"
+          aria-labelledby="tab-export"
+          tabindex="0"
+          hidden
+        >
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Demonstração 02</p>
+              <h2>Visualizar exportação</h2>
+            </div>
+            <p class="section-note">
+              Explore registros individuais e consolidados. O arquivo permanece no navegador.
+            </p>
+          </div>
+
+          <form id="table-form" class="upload-panel" novalidate>
+            <div class="file-grid file-grid--single">
+              <div class="file-field">
+                <label for="table-file">
+                  <span class="file-step">01 <span aria-hidden="true">/</span> EXPORTAÇÃO</span>
+                  <span class="file-title">Exportação BPA</span>
+                  <span class="file-help">Selecione o arquivo que deseja visualizar.</span>
+                </label>
+                <input
+                  id="table-file"
+                  name="table-export"
+                  type="file"
+                  aria-describedby="table-file-error"
+                />
+                <p id="table-file-error" class="field-error" role="alert" hidden></p>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <p>Compatível com texto UTF-8 e Windows-1252.</p>
+              <button id="table-button" class="primary-button" type="submit">
+                Visualizar registros <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </form>
+
+          <section id="table-results" class="results" aria-labelledby="table-results-title" hidden>
+            <div class="results-heading">
+              <div>
+                <p class="section-label">Arquivo interpretado</p>
+                <h2 id="table-results-title">Registros da exportação</h2>
+              </div>
+              <p id="table-caption" class="results-caption"></p>
+            </div>
+
+            <div class="record-group-switch" role="group" aria-label="Tipo de registro">
+              <button id="group-individual" class="group-button" type="button" aria-pressed="true">
+                Individuais <span id="individual-count">0</span>
+              </button>
+              <button
+                id="group-consolidated"
+                class="group-button"
+                type="button"
+                aria-pressed="false"
+              >
+                Consolidados <span id="consolidated-count">0</span>
+              </button>
+            </div>
+
+            <div
+              id="table-scroll"
+              class="table-scroll"
+              role="region"
+              aria-label="Tabela de registros BPA"
+              tabindex="0"
+            >
+              <table id="export-table">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p id="table-empty" class="empty-state" hidden></p>
+            <div id="table-pagination" class="table-pagination">
+              <button id="previous-page" class="page-button" type="button">← Anterior</button>
+              <span id="page-status" aria-live="polite"></span>
+              <button id="next-page" class="page-button" type="button">Próxima →</button>
+            </div>
           </section>
         </section>
       </div>

@@ -1,5 +1,6 @@
 import { parseBPA, parseBPAErrorReport } from '../src/index.js'
 import { matchBPAErrors } from './match-errors.js'
+import { indexBPARecords, paginateRecords } from './export-records.js'
 
 const form = document.getElementById('check-form')
 const reportInput = document.getElementById('report-file')
@@ -212,5 +213,228 @@ form.addEventListener('submit', async (event) => {
     }
   } finally {
     if (runVersion === selectionVersion) setBusy(false)
+  }
+})
+
+const demoTabs = [document.getElementById('tab-check'), document.getElementById('tab-export')]
+
+const activateDemoTab = (activeTab, focus = false) => {
+  demoTabs.forEach((tab) => {
+    const selected = tab === activeTab
+    tab.setAttribute('aria-selected', String(selected))
+    tab.tabIndex = selected ? 0 : -1
+    document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected
+  })
+  if (focus) activeTab.focus()
+}
+
+demoTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => activateDemoTab(tab))
+  tab.addEventListener('keydown', (event) => {
+    let nextIndex
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % demoTabs.length
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + demoTabs.length) % demoTabs.length
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = demoTabs.length - 1
+    if (nextIndex === undefined) return
+    event.preventDefault()
+    activateDemoTab(demoTabs[nextIndex], true)
+  })
+})
+
+const tableForm = document.getElementById('table-form')
+const tableInput = document.getElementById('table-file')
+const tableError = document.getElementById('table-file-error')
+const tableButton = document.getElementById('table-button')
+const tableResults = document.getElementById('table-results')
+const tableHead = document.querySelector('#export-table thead')
+const tableBody = document.querySelector('#export-table tbody')
+const groupButtons = {
+  individual: document.getElementById('group-individual'),
+  consolidated: document.getElementById('group-consolidated'),
+}
+const previousPage = document.getElementById('previous-page')
+const nextPage = document.getElementById('next-page')
+let tableVersion = 0
+let tableRecords = { individual: [], consolidated: [] }
+let selectedGroup = 'individual'
+let tablePage = 1
+
+const displayValue = (value) =>
+  value === '' || value === null || value === undefined ? '—' : String(value)
+const displayCompetence = (value) => (value ? value.slice(4, 6) + '/' + value.slice(0, 4) : '—')
+const displayDate = (value) => (value ? new Intl.DateTimeFormat('pt-BR').format(value) : '—')
+
+const commonColumns = [
+  { label: 'Linha', value: (record) => record.lineNumber },
+  { label: 'CNES', value: ({ entry }) => entry.cnes },
+  { label: 'Competência', value: ({ entry }) => displayCompetence(entry.competence) },
+  {
+    label: 'Folha / seq.',
+    value: ({ entry }) =>
+      String(entry.sheetNumber).padStart(3, '0') +
+      ' / ' +
+      String(entry.sequenceNumber).padStart(2, '0'),
+  },
+  { label: 'Procedimento', value: ({ entry }) => entry.code },
+  { label: 'CBO', value: ({ entry }) => entry.cbo },
+  { label: 'Quantidade', value: ({ entry }) => entry.quantity },
+]
+const groupColumns = {
+  individual: [
+    ...commonColumns,
+    { label: 'Paciente', value: ({ entry }) => entry.patient.name },
+    { label: 'CNS do paciente', value: ({ entry }) => entry.patient.cns },
+    { label: 'Data', value: ({ entry }) => displayDate(entry.date) },
+  ],
+  consolidated: [
+    ...commonColumns,
+    { label: 'Idade', value: ({ entry }) => entry.age },
+    { label: 'Origem', value: ({ entry }) => entry.origin },
+  ],
+}
+
+const setTableBusy = (busy) => {
+  tableButton.disabled = busy
+  tableButton.textContent = busy ? 'Lendo exportação…' : 'Visualizar registros ↗'
+}
+
+const createTableRows = (record, columns) => {
+  const row = element('tr')
+  columns.forEach((column) => row.append(element('td', '', displayValue(column.value(record)))))
+
+  const detailId = 'entry-detail-' + selectedGroup + '-' + record.lineNumber
+  const detailButton = element('button', 'row-detail-button', 'Ver detalhes')
+  detailButton.type = 'button'
+  detailButton.setAttribute('aria-expanded', 'false')
+  detailButton.setAttribute('aria-controls', detailId)
+  const actionCell = element('td')
+  actionCell.append(detailButton)
+  row.append(actionCell)
+
+  const detailRow = element('tr', 'export-detail-row')
+  detailRow.id = detailId
+  detailRow.hidden = true
+  const detailCell = element('td')
+  detailCell.colSpan = columns.length + 1
+  const content = element('div', 'export-detail-content')
+  content.append(
+    createRecordDisclosure('Ver dados interpretados', JSON.stringify(record.entry, null, 2)),
+    createRecordDisclosure('Ver linha original', record.rawLine)
+  )
+  detailCell.append(content)
+  detailRow.append(detailCell)
+
+  detailButton.addEventListener('click', () => {
+    detailRow.hidden = !detailRow.hidden
+    detailButton.setAttribute('aria-expanded', String(!detailRow.hidden))
+    detailButton.textContent = detailRow.hidden ? 'Ver detalhes' : 'Ocultar detalhes'
+  })
+
+  return [row, detailRow]
+}
+
+const renderExportTable = () => {
+  const allRecords = tableRecords[selectedGroup]
+  const columns = groupColumns[selectedGroup]
+  const page = paginateRecords(allRecords, tablePage)
+  tablePage = page.page
+
+  Object.entries(groupButtons).forEach(([group, button]) => {
+    button.setAttribute('aria-pressed', String(group === selectedGroup))
+  })
+  document.getElementById('individual-count').textContent = String(tableRecords.individual.length)
+  document.getElementById('consolidated-count').textContent = String(
+    tableRecords.consolidated.length
+  )
+
+  const headerRow = element('tr')
+  columns.forEach((column) => {
+    const heading = element('th', '', column.label)
+    heading.scope = 'col'
+    headerRow.append(heading)
+  })
+  const actionHeading = element('th', '', 'Detalhes')
+  actionHeading.scope = 'col'
+  headerRow.append(actionHeading)
+  tableHead.replaceChildren(headerRow)
+
+  const fragment = document.createDocumentFragment()
+  page.records.forEach((record) => fragment.append(...createTableRows(record, columns)))
+  tableBody.replaceChildren(fragment)
+
+  const empty = allRecords.length === 0
+  document.getElementById('table-scroll').hidden = empty
+  const emptyMessage = document.getElementById('table-empty')
+  emptyMessage.textContent = empty
+    ? 'Nenhum registro ' +
+      (selectedGroup === 'individual' ? 'individual' : 'consolidado') +
+      ' encontrado neste arquivo.'
+    : ''
+  emptyMessage.hidden = !empty
+  document.getElementById('table-pagination').hidden = empty
+  document.getElementById('page-status').textContent =
+    String(page.start + 1) +
+    '–' +
+    String(page.start + page.records.length) +
+    ' de ' +
+    String(allRecords.length)
+  previousPage.disabled = page.page === 1
+  nextPage.disabled = page.page === page.pageCount
+}
+
+Object.entries(groupButtons).forEach(([group, button]) => {
+  button.addEventListener('click', () => {
+    selectedGroup = group
+    tablePage = 1
+    renderExportTable()
+  })
+})
+previousPage.addEventListener('click', () => {
+  tablePage -= 1
+  renderExportTable()
+})
+nextPage.addEventListener('click', () => {
+  tablePage += 1
+  renderExportTable()
+})
+
+tableInput.addEventListener('change', () => {
+  tableVersion += 1
+  tableResults.hidden = true
+  setTableBusy(false)
+  setError(tableError)
+})
+
+tableForm.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  tableResults.hidden = true
+  setError(tableError)
+
+  const file = tableInput.files[0]
+  if (!file) {
+    setError(tableError, 'Selecione a exportação BPA.')
+    return
+  }
+
+  const runVersion = tableVersion
+  setTableBusy(true)
+  try {
+    const text = await readText(file)
+    if (runVersion !== tableVersion) return
+    const parsed = parseBPA(text)
+    tableRecords = indexBPARecords(text, parsed)
+    selectedGroup = tableRecords.individual.length ? 'individual' : 'consolidated'
+    tablePage = 1
+    document.getElementById('table-caption').textContent = file.name
+    renderExportTable()
+    tableResults.hidden = false
+    tableResults.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (error) {
+    if (runVersion === tableVersion) {
+      setError(tableError, 'Não foi possível ler a exportação: ' + error.message)
+    }
+  } finally {
+    if (runVersion === tableVersion) setTableBusy(false)
   }
 })
