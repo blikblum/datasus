@@ -1,8 +1,17 @@
 import { expect } from 'chai'
-import { removeAccents } from '../src/utils.js'
+import { normalizeStringText } from '../src/utils.js'
 
-describe('removeAccents', () => {
-  it('should remove accents and degree symbols', () => {
-    expect(removeAccents('João 90°')).to.be.equal('Joao 90')
+describe('normalizeStringText', () => {
+  it('removes combining accents after NFD normalization', () => {
+    expect(normalizeStringText('João')).to.equal('Joao')
+    expect(normalizeStringText('Cafe\u0301')).to.equal('Cafe')
+  })
+
+  it('keeps characters available in Windows-1252', () => {
+    expect(normalizeStringText('90° € “quote” Œ ß')).to.equal('90° € “quote” Œ ß')
+  })
+
+  it('replaces each unsupported Unicode code point with a question mark', () => {
+    expect(normalizeStringText('A🧪B字C')).to.equal('A?B?C')
   })
 })

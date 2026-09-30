@@ -1,4 +1,4 @@
-import { normalizeNumberText, padStartNumber, removeAccents } from './utils.js'
+import { normalizeNumberText, padStartNumber, normalizeStringText } from './utils.js'
 import { differenceInYears, format } from 'date-fns'
 
 const ENTRIES_PER_SHEET = 20
@@ -30,7 +30,7 @@ const getHeader = (
     padStartNumber(lineCount, 6, '0').slice(0, 6),
     padStartNumber(sheetCount, 6, '0').slice(0, 6),
     `${controlCode}`.padStart(4, '0').slice(0, 4),
-    `${removeAccents(origin.name)}`.padEnd(30, ' ').slice(0, 30),
+    `${normalizeStringText(origin.name)}`.padEnd(30, ' ').slice(0, 30),
     `${origin.abbrev || ''}`.padEnd(6, ' ').slice(0, 6),
     normalizeNumberText(origin.cnpj || origin.cpf)
       .padStart(14, '0')
@@ -90,7 +90,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     padStartNumber(procedure.character || 1, 2, '0').slice(0, 2),
     `${procedure.authorization || ''}`.padEnd(13, ' ').slice(0, 13),
     (procedure.origin || 'BPA').padStart(3, ' ').slice(0, 3),
-    `${removeAccents(patient.name)}`.padEnd(30, ' ').slice(0, 30),
+    `${normalizeStringText(patient.name)}`.padEnd(30, ' ').slice(0, 30),
     birthDate,
     padStartNumber(patient.race || 99, 2, '0').slice(0, 2),
     `${patient.ethnicity || ''}`.padEnd(4, ' ').slice(0, 4),
@@ -102,10 +102,10 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     ' '.repeat(14), // maintainer cnpj
     `${patient.cep || EIGHT_BLANKS}`.padStart(8, '0').slice(0, 8),
     `${patient.placeCode || THREE_BLANKS}`.padStart(3, '0').slice(0, 3),
-    `${removeAccents(patient.address)}`.padEnd(30, ' ').slice(0, 30),
-    `${removeAccents(patient.addressComplement)}`.padEnd(10, ' ').slice(0, 10),
+    `${normalizeStringText(patient.address)}`.padEnd(30, ' ').slice(0, 30),
+    `${normalizeStringText(patient.addressComplement)}`.padEnd(10, ' ').slice(0, 10),
     `${patient.addressNumber || ''}`.padEnd(5, ' ').slice(0, 5),
-    `${removeAccents(patient.addressDistrict)}`.padEnd(30, ' ').slice(0, 30),
+    `${normalizeStringText(patient.addressDistrict)}`.padEnd(30, ' ').slice(0, 30),
     normalizeNumberText(patient.phone).padEnd(11, ' ').slice(0, 11),
     `${patient.email || ''}`.padEnd(40, ' ').slice(0, 40),
     padStartNumber(procedure.nationalId || TEN_BLANKS, 10, '0').slice(0, 10),

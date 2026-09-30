@@ -790,6 +790,15 @@ describe('BPA', () => {
         expect(entry.substr(112, 30)).to.be.equal('LUIZ AMERICO                  ')
       })
 
+      it('keeps normalized patient fields at their fixed positions', () => {
+        const entry = getIndividualEntries({
+          procedures: [{ patient: { name: 'João 🧪 €', birthDate: new Date(2000, 0, 1) } }],
+        })[0]
+
+        expect(entry.substr(112, 30)).to.equal('Joao ? €'.padEnd(30, ' '))
+        expect(entry.substr(142, 8)).to.equal('20000101')
+      })
+
       it('should have patient birthDate at 143-150', () => {
         let entry = getIndividualEntries({
           procedures: [{}],
