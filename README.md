@@ -17,7 +17,7 @@ npm install datasus
 The package uses ES modules. Import its public functions from `datasus`:
 
 ```js
-import { generateBPA, parseBPA, parseBPAErrorReport } from 'datasus'
+import { generateBPA, parseBPA, parseBPARaw, parseBPAErrorReport } from 'datasus'
 ```
 
 ## Generate a BPA export
@@ -77,6 +77,34 @@ blank dates), numeric fields such as quantity and sheet number are numbers, and
 most identifiers remain strings to preserve leading zeros. It accepts CRLF, LF,
 or CR line endings and reports malformed record widths or fields with line numbers.
 
+To inspect fields without converting their values, use `parseBPARaw(text)`:
+
+```js
+const raw = parseBPARaw(exportText)
+console.log(raw.individual[0].sheetNumber) // '001'
+console.log(raw.individual[0].date) // '20260812'
+console.log(raw.individual[0].patient.homeless) // 'N'
+```
+
+It returns the same structure as `parseBPA`, with every field represented as a
+trimmed string. Leading zeros are preserved and blank fields become `''`.
+Invalid dates, numeric values, and flags remain available for inspection instead
+of causing conversion errors. Record types and exact widths are still validated
+by default. To inspect overlong records at their original fixed positions, use:
+
+```js
+const raw = parseBPARaw(decodedText, { allowExtraCharacters: true })
+```
+
+This option accepts records longer than 48 (consolidated) or 351 (individual)
+characters, ignoring characters beyond the layout when extracting fields.
+Short records and unknown record types are still rejected. It does not realign
+shifted fields or move trailing flags into their intended positions. `parseBPA`
+always requires exact record widths.
+
+Both parsers operate on already decoded text; neither converts file encoding,
+normalizes Unicode, nor repairs fields shifted by incorrect decoding.
+
 ## Parse a BPA consistency report
 
 ```js
@@ -99,7 +127,14 @@ page breaks and repeated headings. BPAC report rows are currently unsupported.
 The [browser demo](https://blikblum.github.io/datasus/) has two tabs. **Check errors** links
 BPAI occurrences in a consistency report to patients and physical lines in a BPA export.
 **View export** shows individual and consolidated records in separate, paginated tables,
-with the complete parsed data and original line available for each row. Files are processed
+with native data, raw field strings, and the original line available for each row.
+Matched patients also expose these representations. Both tabs decode export files
+exclusively as Windows-1252 to reproduce the positions read by the BPA program,
+even when the uploaded bytes were written as UTF-8. Error reports use UTF-8 with
+a Windows-1252 fallback. The demo enables raw inspection of overlong records and
+preserves each complete decoded original line. If native parsing fails, both tabs
+show the error and use raw values for the entire file; short records and unknown
+types still prevent loading. Files are processed
 entirely in the browser and are not sent to a server.
 
 To run the demo locally:

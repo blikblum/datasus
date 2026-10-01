@@ -104,7 +104,7 @@
               </div>
             </div>
             <div class="panel-footer">
-              <p>Compatível com texto UTF-8 e Windows-1252.</p>
+              <p>Exportação lida como Windows-1252. Relatório em UTF-8 ou Windows-1252.</p>
               <button id="check-button" class="primary-button" type="submit">
                 Relacionar erros <span aria-hidden="true">↗</span>
               </button>
@@ -121,6 +121,7 @@
               </div>
               <p id="results-caption" class="results-caption"></p>
             </div>
+            <p id="export-conversion-warning" class="result-note" role="status" hidden></p>
             <div class="summary-grid" aria-label="Resumo da análise">
               <div class="summary-item">
                 <strong id="total-count">0</strong><span>ocorrências</span>
@@ -175,7 +176,7 @@
               </div>
             </div>
             <div class="panel-footer">
-              <p>Compatível com texto UTF-8 e Windows-1252.</p>
+              <p>Exportação lida como Windows-1252, como no programa BPA.</p>
               <button id="table-button" class="primary-button" type="submit">
                 Visualizar registros <span aria-hidden="true">↗</span>
               </button>
@@ -191,6 +192,7 @@
               <p id="table-caption" class="results-caption"></p>
             </div>
 
+            <p id="table-conversion-warning" class="result-note" role="status" hidden></p>
             <div class="record-group-switch" role="group" aria-label="Tipo de registro">
               <button id="group-individual" class="group-button" type="button" aria-pressed="true">
                 Individuais <span id="individual-count">0</span>

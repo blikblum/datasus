@@ -180,11 +180,7 @@ const parseDate = (value, field, lineNumber) => {
   date.setFullYear(year, month - 1, day)
   date.setHours(0, 0, 0, 0)
 
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     throw new Error('Invalid ' + field + ' at line ' + lineNumber)
   }
 
@@ -209,7 +205,11 @@ const createEntryReader = (line) => {
   }
 }
 
-const parseConsolidatedEntry = (line, lineNumber) => {
+const nativeParsers = { number: parseNumber, date: parseDate, flag: parseFlag }
+const keepString = (value) => value
+const rawParsers = { number: keepString, date: keepString, flag: keepString }
+
+const parseConsolidatedEntry = (line, lineNumber, parsers) => {
   const read = createEntryReader(line)
 
   return {
@@ -217,37 +217,37 @@ const parseConsolidatedEntry = (line, lineNumber) => {
     cnes: read(7),
     competence: read(6),
     cbo: read(6),
-    sheetNumber: parseNumber(read(3), 'sheet number', lineNumber),
-    sequenceNumber: parseNumber(read(2), 'sequence number', lineNumber),
+    sheetNumber: parsers.number(read(3), 'sheet number', lineNumber),
+    sequenceNumber: parsers.number(read(2), 'sequence number', lineNumber),
     code: read(10),
-    age: parseNumber(read(3), 'age', lineNumber),
-    quantity: parseNumber(read(6), 'quantity', lineNumber),
+    age: parsers.number(read(3), 'age', lineNumber),
+    quantity: parsers.number(read(6), 'quantity', lineNumber),
     origin: read(3),
   }
 }
 
-const parseIndividualEntry = (line, lineNumber) => {
+const parseIndividualEntry = (line, lineNumber, parsers) => {
   const read = createEntryReader(line)
   const entry = { type: read(2), cnes: read(7), competence: read(6) }
   const patient = {}
 
   entry.cns = read(15)
   entry.cbo = read(6)
-  entry.date = parseDate(read(8), 'date', lineNumber)
-  entry.sheetNumber = parseNumber(read(3), 'sheet number', lineNumber)
-  entry.sequenceNumber = parseNumber(read(2), 'sequence number', lineNumber)
+  entry.date = parsers.date(read(8), 'date', lineNumber)
+  entry.sheetNumber = parsers.number(read(3), 'sheet number', lineNumber)
+  entry.sequenceNumber = parsers.number(read(2), 'sequence number', lineNumber)
   entry.code = read(10)
   patient.cns = read(15)
   patient.gender = read(1)
   patient.ibge = read(6)
   entry.cid = read(4)
-  entry.age = parseNumber(read(3), 'age', lineNumber)
-  entry.quantity = parseNumber(read(6), 'quantity', lineNumber)
+  entry.age = parsers.number(read(3), 'age', lineNumber)
+  entry.quantity = parsers.number(read(6), 'quantity', lineNumber)
   entry.character = read(2)
   entry.authorization = read(13)
   entry.origin = read(3)
   patient.name = read(30)
-  patient.birthDate = parseDate(read(8), 'birth date', lineNumber)
+  patient.birthDate = parsers.date(read(8), 'birth date', lineNumber)
   patient.race = read(2)
   patient.ethnicity = read(4)
   patient.nationality = read(3)
@@ -266,14 +266,14 @@ const parseIndividualEntry = (line, lineNumber) => {
   patient.email = read(40)
   entry.nationalId = read(10)
   patient.cpf = read(11)
-  patient.homeless = parseFlag(read(1), 'homeless flag', lineNumber)
-  patient.noCpf = parseFlag(read(1), 'no CPF flag', lineNumber)
+  patient.homeless = parsers.flag(read(1), 'homeless flag', lineNumber)
+  patient.noCpf = parsers.flag(read(1), 'no CPF flag', lineNumber)
   entry.patient = patient
 
   return entry
 }
 
-export const parseBPA = (text) => {
+const parseEntries = (text, parsers, allowExtraCharacters = false) => {
   if (typeof text !== 'string') {
     throw new TypeError('BPA export must be a string')
   }
@@ -287,15 +287,15 @@ export const parseBPA = (text) => {
     const type = line.slice(0, 2)
     const lineNumber = index + 1
     if (type === '02') {
-      if (line.length !== 48) {
+      if (line.length < 48 || (!allowExtraCharacters && line.length !== 48)) {
         throw new Error('Invalid consolidated entry width at line ' + lineNumber)
       }
-      entries.consolidated.push(parseConsolidatedEntry(line, lineNumber))
+      entries.consolidated.push(parseConsolidatedEntry(line, lineNumber, parsers))
     } else if (type === '03') {
-      if (line.length !== 351) {
+      if (line.length < 351 || (!allowExtraCharacters && line.length !== 351)) {
         throw new Error('Invalid individual entry width at line ' + lineNumber)
       }
-      entries.individual.push(parseIndividualEntry(line, lineNumber))
+      entries.individual.push(parseIndividualEntry(line, lineNumber, parsers))
     } else {
       throw new Error('Unknown BPA record type at line ' + lineNumber)
     }
@@ -303,3 +303,8 @@ export const parseBPA = (text) => {
 
   return entries
 }
+
+export const parseBPA = (text) => parseEntries(text, nativeParsers)
+
+export const parseBPARaw = (text, { allowExtraCharacters = false } = {}) =>
+  parseEntries(text, rawParsers, allowExtraCharacters)

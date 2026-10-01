@@ -1,6 +1,6 @@
-import { parseBPA, parseBPAErrorReport } from '../src/index.js'
+import { parseBPAErrorReport } from '../src/index.js'
 import { matchBPAErrors } from './match-errors.js'
-import { indexBPARecords, paginateRecords } from './export-records.js'
+import { indexBPARecords, paginateRecords, parseBPAForInspection } from './export-records.js'
 
 const form = document.getElementById('check-form')
 const reportInput = document.getElementById('report-file')
@@ -8,6 +8,7 @@ const exportInput = document.getElementById('export-file')
 const reportError = document.getElementById('report-error')
 const exportError = document.getElementById('export-error')
 const analysisError = document.getElementById('analysis-error')
+const exportConversionWarning = document.getElementById('export-conversion-warning')
 const checkButton = document.getElementById('check-button')
 const resultsSection = document.getElementById('results')
 const resultList = document.getElementById('result-list')
@@ -36,6 +37,7 @@ const clearResults = () => {
   resultsSection.hidden = true
   resultList.replaceChildren()
   setError(analysisError)
+  setError(exportConversionWarning)
 }
 
 const setBusy = (busy) => {
@@ -52,6 +54,9 @@ const readText = async (file) => {
   }
 }
 
+const readExportText = async (file) =>
+  new TextDecoder('windows-1252').decode(await file.arrayBuffer())
+
 const appendDetail = (parent, label, value) => {
   const item = element('div', 'detail-item')
   item.append(element('dt', '', label), element('dd', '', value || 'Não informado'))
@@ -67,7 +72,25 @@ const createRecordDisclosure = (label, content) => {
   return disclosure
 }
 
-const createPatientRecord = ({ entry, lineNumber, rawLine }) => {
+const appendRecordDisclosures = (parent, { entry, rawEntry, rawLine }) => {
+  if (entry !== rawEntry) {
+    parent.append(createRecordDisclosure('Ver dados interpretados', JSON.stringify(entry, null, 2)))
+  }
+  if (rawEntry) {
+    parent.append(createRecordDisclosure('Ver valores brutos', JSON.stringify(rawEntry, null, 2)))
+  }
+  parent.append(createRecordDisclosure('Ver linha original', rawLine))
+}
+
+const conversionWarning = (error) =>
+  error
+    ? 'Não foi possível interpretar os valores: ' +
+      error.message +
+      '. Exibindo os valores brutos de todo o arquivo.'
+    : ''
+
+const createPatientRecord = (sourceRecord) => {
+  const { entry, lineNumber } = sourceRecord
   const record = element('div', 'patient-record')
   const heading = element('div', 'patient-heading')
   heading.append(
@@ -82,10 +105,7 @@ const createPatientRecord = ({ entry, lineNumber, rawLine }) => {
   appendDetail(details, 'CPF', entry.patient.cpf)
   record.append(details)
 
-  record.append(
-    createRecordDisclosure('Ver linha original', rawLine),
-    createRecordDisclosure('Ver dados interpretados', JSON.stringify(entry, null, 2))
-  )
+  appendRecordDisclosures(record, sourceRecord)
   return record
 }
 
@@ -195,18 +215,24 @@ form.addEventListener('submit', async (event) => {
     }
 
     let exportText
-    let individualEntries
+    let inspection
     try {
-      exportText = await readText(exportFile)
+      exportText = await readExportText(exportFile)
       if (runVersion !== selectionVersion) return
-      individualEntries = parseBPA(exportText).individual
+      inspection = parseBPAForInspection(exportText)
     } catch (error) {
       setError(exportError, 'Não foi possível ler a exportação: ' + error.message)
       return
     }
 
     try {
-      const matches = matchBPAErrors(occurrences, exportText, individualEntries)
+      const matches = matchBPAErrors(
+        occurrences,
+        exportText,
+        inspection.parsed.individual,
+        inspection.rawParsed.individual
+      )
+      setError(exportConversionWarning, conversionWarning(inspection.conversionError))
       renderResults(matches, reportFile.name, exportFile.name)
     } catch (error) {
       setError(analysisError, error.message)
@@ -245,6 +271,7 @@ demoTabs.forEach((tab, index) => {
 const tableForm = document.getElementById('table-form')
 const tableInput = document.getElementById('table-file')
 const tableError = document.getElementById('table-file-error')
+const tableConversionWarning = document.getElementById('table-conversion-warning')
 const tableButton = document.getElementById('table-button')
 const tableResults = document.getElementById('table-results')
 const tableHead = document.querySelector('#export-table thead')
@@ -263,7 +290,8 @@ let tablePage = 1
 const displayValue = (value) =>
   value === '' || value === null || value === undefined ? '—' : String(value)
 const displayCompetence = (value) => (value ? value.slice(4, 6) + '/' + value.slice(0, 4) : '—')
-const displayDate = (value) => (value ? new Intl.DateTimeFormat('pt-BR').format(value) : '—')
+const displayDate = (value) =>
+  value instanceof Date ? new Intl.DateTimeFormat('pt-BR').format(value) : displayValue(value)
 
 const commonColumns = [
   { label: 'Linha', value: (record) => record.lineNumber },
@@ -318,10 +346,7 @@ const createTableRows = (record, columns) => {
   const detailCell = element('td')
   detailCell.colSpan = columns.length + 1
   const content = element('div', 'export-detail-content')
-  content.append(
-    createRecordDisclosure('Ver dados interpretados', JSON.stringify(record.entry, null, 2)),
-    createRecordDisclosure('Ver linha original', record.rawLine)
-  )
+  appendRecordDisclosures(content, record)
   detailCell.append(content)
   detailRow.append(detailCell)
 
@@ -404,12 +429,14 @@ tableInput.addEventListener('change', () => {
   tableResults.hidden = true
   setTableBusy(false)
   setError(tableError)
+  setError(tableConversionWarning)
 })
 
 tableForm.addEventListener('submit', async (event) => {
   event.preventDefault()
   tableResults.hidden = true
   setError(tableError)
+  setError(tableConversionWarning)
 
   const file = tableInput.files[0]
   if (!file) {
@@ -420,10 +447,11 @@ tableForm.addEventListener('submit', async (event) => {
   const runVersion = tableVersion
   setTableBusy(true)
   try {
-    const text = await readText(file)
+    const text = await readExportText(file)
     if (runVersion !== tableVersion) return
-    const parsed = parseBPA(text)
-    tableRecords = indexBPARecords(text, parsed)
+    const { parsed, rawParsed, conversionError } = parseBPAForInspection(text)
+    tableRecords = indexBPARecords(text, parsed, rawParsed)
+    setError(tableConversionWarning, conversionWarning(conversionError))
     selectedGroup = tableRecords.individual.length ? 'individual' : 'consolidated'
     tablePage = 1
     document.getElementById('table-caption').textContent = file.name

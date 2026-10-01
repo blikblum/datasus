@@ -1,14 +1,22 @@
 const recordKey = ({ cnes, competence, sheetNumber, sequenceNumber, code, cbo, cns }) =>
   JSON.stringify([cnes, competence, Number(sheetNumber), Number(sequenceNumber), code, cbo, cns])
 
-export const matchBPAErrors = (occurrences, exportText, individualEntries) => {
+export const matchBPAErrors = (
+  occurrences,
+  exportText,
+  individualEntries,
+  rawIndividualEntries
+) => {
   const sourceLines = exportText.split(/\r\n|\n|\r/)
   const individualLines = sourceLines.flatMap((rawLine, index) => {
     const line = rawLine.replace(/^\uFEFF/, '')
     return line.startsWith('03') ? [{ lineNumber: index + 1, rawLine: line }] : []
   })
 
-  if (individualLines.length !== individualEntries.length) {
+  if (
+    individualLines.length !== individualEntries.length ||
+    (rawIndividualEntries && individualLines.length !== rawIndividualEntries.length)
+  ) {
     throw new Error('Não foi possível associar os registros às linhas da exportação.')
   }
 
@@ -16,7 +24,9 @@ export const matchBPAErrors = (occurrences, exportText, individualEntries) => {
   individualEntries.forEach((entry, index) => {
     const key = recordKey(entry)
     const records = recordsByKey.get(key) || []
-    records.push({ entry, ...individualLines[index] })
+    const record = { entry, ...individualLines[index] }
+    if (rawIndividualEntries) record.rawEntry = rawIndividualEntries[index]
+    records.push(record)
     recordsByKey.set(key, records)
   })
 
