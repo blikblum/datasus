@@ -8,7 +8,7 @@ const exportInput = document.getElementById('export-file')
 const reportError = document.getElementById('report-error')
 const exportError = document.getElementById('export-error')
 const analysisError = document.getElementById('analysis-error')
-const exportConversionWarning = document.getElementById('export-conversion-warning')
+const exportValidationErrors = document.getElementById('export-validation-errors')
 const checkButton = document.getElementById('check-button')
 const resultsSection = document.getElementById('results')
 const resultList = document.getElementById('result-list')
@@ -37,7 +37,7 @@ const clearResults = () => {
   resultsSection.hidden = true
   resultList.replaceChildren()
   setError(analysisError)
-  setError(exportConversionWarning)
+  exportValidationErrors.replaceChildren()
 }
 
 const setBusy = (busy) => {
@@ -72,22 +72,31 @@ const createRecordDisclosure = (label, content) => {
   return disclosure
 }
 
-const appendRecordDisclosures = (parent, { entry, rawEntry, rawLine }) => {
-  if (entry !== rawEntry) {
-    parent.append(createRecordDisclosure('Ver dados interpretados', JSON.stringify(entry, null, 2)))
-  }
+const createValidationDisclosure = (errors) => {
+  const disclosure = element('details', 'record-details')
+  const list = element('ul', 'validation-errors')
+  errors.forEach(({ lineNumber, field, message }) => {
+    list.append(
+      element('li', '', 'Linha ' + lineNumber + (field ? ' · ' + field : '') + ': ' + message)
+    )
+  })
+  disclosure.append(element('summary', '', 'Erros de validação (' + errors.length + ')'), list)
+  return disclosure
+}
+
+const renderValidationErrors = (parent, errors) => {
+  parent.replaceChildren()
+  if (errors.length) parent.append(createValidationDisclosure(errors))
+}
+
+const appendRecordDisclosures = (parent, { entry, rawEntry, rawLine, errors = [] }) => {
+  if (errors.length) parent.append(createValidationDisclosure(errors))
+  parent.append(createRecordDisclosure('Ver dados interpretados', JSON.stringify(entry, null, 2)))
   if (rawEntry) {
     parent.append(createRecordDisclosure('Ver valores brutos', JSON.stringify(rawEntry, null, 2)))
   }
   parent.append(createRecordDisclosure('Ver linha original', rawLine))
 }
-
-const conversionWarning = (error) =>
-  error
-    ? 'Não foi possível interpretar os valores: ' +
-      error.message +
-      '. Exibindo os valores brutos de todo o arquivo.'
-    : ''
 
 const createPatientRecord = (sourceRecord) => {
   const { entry, lineNumber } = sourceRecord
@@ -229,10 +238,11 @@ form.addEventListener('submit', async (event) => {
       const matches = matchBPAErrors(
         occurrences,
         exportText,
-        inspection.parsed.individual,
-        inspection.rawParsed.individual
+        inspection.records.individual,
+        inspection.rawRecords.individual,
+        inspection.errors
       )
-      setError(exportConversionWarning, conversionWarning(inspection.conversionError))
+      renderValidationErrors(exportValidationErrors, inspection.errors)
       renderResults(matches, reportFile.name, exportFile.name)
     } catch (error) {
       setError(analysisError, error.message)
@@ -271,11 +281,12 @@ demoTabs.forEach((tab, index) => {
 const tableForm = document.getElementById('table-form')
 const tableInput = document.getElementById('table-file')
 const tableError = document.getElementById('table-file-error')
-const tableConversionWarning = document.getElementById('table-conversion-warning')
+const tableValidationErrors = document.getElementById('table-validation-errors')
 const tableButton = document.getElementById('table-button')
 const tableResults = document.getElementById('table-results')
 const tableHead = document.querySelector('#export-table thead')
 const tableBody = document.querySelector('#export-table tbody')
+const onlyErrors = document.getElementById('only-errors')
 const groupButtons = {
   individual: document.getElementById('group-individual'),
   consolidated: document.getElementById('group-consolidated'),
@@ -300,9 +311,9 @@ const commonColumns = [
   {
     label: 'Folha / seq.',
     value: ({ entry }) =>
-      String(entry.sheetNumber).padStart(3, '0') +
+      (entry.sheetNumber === null ? '—' : String(entry.sheetNumber).padStart(3, '0')) +
       ' / ' +
-      String(entry.sequenceNumber).padStart(2, '0'),
+      (entry.sequenceNumber === null ? '—' : String(entry.sequenceNumber).padStart(2, '0')),
   },
   { label: 'Procedimento', value: ({ entry }) => entry.code },
   { label: 'CBO', value: ({ entry }) => entry.cbo },
@@ -328,8 +339,17 @@ const setTableBusy = (busy) => {
 }
 
 const createTableRows = (record, columns) => {
-  const row = element('tr')
+  const row = element('tr', record.errors.length ? 'export-row--error' : '')
   columns.forEach((column) => row.append(element('td', '', displayValue(column.value(record)))))
+  if (record.errors.length) {
+    row.firstElementChild.append(
+      element(
+        'span',
+        'record-error-badge',
+        record.errors.length + (record.errors.length === 1 ? ' erro' : ' erros')
+      )
+    )
+  }
 
   const detailId = 'entry-detail-' + selectedGroup + '-' + record.lineNumber
   const detailButton = element('button', 'row-detail-button', 'Ver detalhes')
@@ -360,7 +380,13 @@ const createTableRows = (record, columns) => {
 }
 
 const renderExportTable = () => {
-  const allRecords = tableRecords[selectedGroup]
+  const visibleRecords = Object.fromEntries(
+    Object.entries(tableRecords).map(([group, records]) => [
+      group,
+      onlyErrors.checked ? records.filter((record) => record.errors.length > 0) : records,
+    ])
+  )
+  const allRecords = visibleRecords[selectedGroup]
   const columns = groupColumns[selectedGroup]
   const page = paginateRecords(allRecords, tablePage)
   tablePage = page.page
@@ -368,9 +394,9 @@ const renderExportTable = () => {
   Object.entries(groupButtons).forEach(([group, button]) => {
     button.setAttribute('aria-pressed', String(group === selectedGroup))
   })
-  document.getElementById('individual-count').textContent = String(tableRecords.individual.length)
+  document.getElementById('individual-count').textContent = String(visibleRecords.individual.length)
   document.getElementById('consolidated-count').textContent = String(
-    tableRecords.consolidated.length
+    visibleRecords.consolidated.length
   )
 
   const headerRow = element('tr')
@@ -394,6 +420,7 @@ const renderExportTable = () => {
   emptyMessage.textContent = empty
     ? 'Nenhum registro ' +
       (selectedGroup === 'individual' ? 'individual' : 'consolidado') +
+      (onlyErrors.checked ? ' com erro' : '') +
       ' encontrado neste arquivo.'
     : ''
   emptyMessage.hidden = !empty
@@ -415,6 +442,10 @@ Object.entries(groupButtons).forEach(([group, button]) => {
     renderExportTable()
   })
 })
+onlyErrors.addEventListener('change', () => {
+  tablePage = 1
+  renderExportTable()
+})
 previousPage.addEventListener('click', () => {
   tablePage -= 1
   renderExportTable()
@@ -429,14 +460,14 @@ tableInput.addEventListener('change', () => {
   tableResults.hidden = true
   setTableBusy(false)
   setError(tableError)
-  setError(tableConversionWarning)
+  tableValidationErrors.replaceChildren()
 })
 
 tableForm.addEventListener('submit', async (event) => {
   event.preventDefault()
   tableResults.hidden = true
   setError(tableError)
-  setError(tableConversionWarning)
+  tableValidationErrors.replaceChildren()
 
   const file = tableInput.files[0]
   if (!file) {
@@ -449,9 +480,9 @@ tableForm.addEventListener('submit', async (event) => {
   try {
     const text = await readExportText(file)
     if (runVersion !== tableVersion) return
-    const { parsed, rawParsed, conversionError } = parseBPAForInspection(text)
-    tableRecords = indexBPARecords(text, parsed, rawParsed)
-    setError(tableConversionWarning, conversionWarning(conversionError))
+    const { records, rawRecords, errors } = parseBPAForInspection(text)
+    tableRecords = indexBPARecords(text, records, rawRecords, errors)
+    renderValidationErrors(tableValidationErrors, errors)
     selectedGroup = tableRecords.individual.length ? 'individual' : 'consolidated'
     tablePage = 1
     document.getElementById('table-caption').textContent = file.name

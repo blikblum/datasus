@@ -121,7 +121,7 @@
               </div>
               <p id="results-caption" class="results-caption"></p>
             </div>
-            <p id="export-conversion-warning" class="result-note" role="status" hidden></p>
+            <div id="export-validation-errors"></div>
             <div class="summary-grid" aria-label="Resumo da análise">
               <div class="summary-item">
                 <strong id="total-count">0</strong><span>ocorrências</span>
@@ -192,19 +192,30 @@
               <p id="table-caption" class="results-caption"></p>
             </div>
 
-            <p id="table-conversion-warning" class="result-note" role="status" hidden></p>
-            <div class="record-group-switch" role="group" aria-label="Tipo de registro">
-              <button id="group-individual" class="group-button" type="button" aria-pressed="true">
-                Individuais <span id="individual-count">0</span>
-              </button>
-              <button
-                id="group-consolidated"
-                class="group-button"
-                type="button"
-                aria-pressed="false"
-              >
-                Consolidados <span id="consolidated-count">0</span>
-              </button>
+            <div id="table-validation-errors"></div>
+            <div class="table-toolbar">
+              <div class="record-group-switch" role="group" aria-label="Tipo de registro">
+                <button
+                  id="group-individual"
+                  class="group-button"
+                  type="button"
+                  aria-pressed="true"
+                >
+                  Individuais <span id="individual-count">0</span>
+                </button>
+                <button
+                  id="group-consolidated"
+                  class="group-button"
+                  type="button"
+                  aria-pressed="false"
+                >
+                  Consolidados <span id="consolidated-count">0</span>
+                </button>
+              </div>
+              <label class="table-error-filter">
+                <input id="only-errors" type="checkbox" aria-controls="export-table" />
+                Somente registros com erro
+              </label>
             </div>
 
             <div

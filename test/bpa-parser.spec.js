@@ -52,7 +52,7 @@ const getExport = (procedures = [procedure], options) =>
 
 describe('parseBPA', () => {
   it('parses every consolidated and individual field from a mixed export', () => {
-    const result = parseBPA(getExport())
+    const result = parseBPA(getExport()).records
     const age = differenceInYears(new Date(), birthDate)
 
     expect(result.consolidated).to.deep.equal([
@@ -121,7 +121,7 @@ describe('parseBPA', () => {
   it('preserves fields that the generator leaves blank', () => {
     const line = getExport([procedure], { consolidated: false }).split('\r\n')[1]
     const edited = line.slice(0, 165) + 'SEQ00001' + '1234' + '00123456789012' + line.slice(191)
-    const { individual } = parseBPA(edited)
+    const { individual } = parseBPA(edited).records
 
     expect(individual[0].sequenceCode).to.equal('SEQ00001')
     expect(individual[0].areaCode).to.equal('1234')
@@ -129,8 +129,8 @@ describe('parseBPA', () => {
   })
 
   it('supports individual-only and consolidated-only exports', () => {
-    const individual = parseBPA(getExport([procedure], { consolidated: false }))
-    const consolidated = parseBPA(getExport([procedure], { individual: false }))
+    const individual = parseBPA(getExport([procedure], { consolidated: false })).records
+    const consolidated = parseBPA(getExport([procedure], { individual: false })).records
 
     expect(individual.consolidated).to.deep.equal([])
     expect(individual.individual).to.have.length(1)
@@ -143,7 +143,7 @@ describe('parseBPA', () => {
       ...procedure,
       code: String(index + 1).padStart(10, '0'),
     }))
-    const result = parseBPA(getExport(procedures))
+    const result = parseBPA(getExport(procedures)).records
 
     expect(result.consolidated.map((entry) => entry.code)).to.deep.equal(
       procedures.map((entry) => entry.code)
@@ -159,7 +159,7 @@ describe('parseBPA', () => {
   it('represents blank text and dates without losing generated defaults', () => {
     const { individual } = parseBPA(
       getExport([{ code: '03.02.04.005-6' }], { consolidated: false })
-    )
+    ).records
     const entry = individual[0]
 
     expect(entry.cns).to.equal('')
@@ -180,77 +180,97 @@ describe('parseBPA', () => {
     const withBlankLines = '\uFEFF' + exportText + '\n\n'
     const entryLines = exportText.split('\n').slice(1).join('\n')
 
-    expect(parseBPA(withBlankLines)).to.deep.equal(parseBPA(entryLines))
-    expect(parseBPA('')).to.deep.equal({ consolidated: [], individual: [] })
+    expect(parseBPA(withBlankLines).records).to.deep.equal(parseBPA(entryLines).records)
+    expect(parseBPA('')).to.deep.equal({
+      records: { consolidated: [], individual: [] },
+      errors: [],
+    })
   })
 
-  it('reports unknown types and incorrect widths with line numbers', () => {
-    expect(() => parseBPA('01#BPA#header\n99unknown')).to.throw('Unknown BPA record type at line 2')
-    expect(() => parseBPA('02short')).to.throw('Invalid consolidated entry width at line 1')
-    expect(() => parseBPA('03short')).to.throw('Invalid individual entry width at line 1')
+  it('collects unknown types and width errors while keeping recognized records', () => {
+    const result = parseBPA('01#BPA#header\n99unknown\n02short\n03short')
+    expect(result.records.consolidated).to.have.lengthOf(1)
+    expect(result.records.individual).to.have.lengthOf(1)
+    expect(
+      result.errors
+        .filter(({ field }) => field === 'type' || field === null)
+        .map(({ lineNumber, field }) => ({ lineNumber, field }))
+    ).to.deep.equal([
+      { lineNumber: 2, field: 'type' },
+      { lineNumber: 3, field: null },
+      { lineNumber: 4, field: null },
+    ])
+    expect(result.records.individual[0].sheetNumber).to.equal(null)
   })
 
-  it('rejects invalid dates, numeric positions, and flags', () => {
+  it('uses null for invalid dates, numbers, and flags without stopping', () => {
     const line = getExport([procedure], { consolidated: false }).split('\r\n')[1]
-    const invalidDate = line.slice(0, 36) + '20200230' + line.slice(44)
-    const invalidBirthDate = line.slice(0, 142) + '19901302' + line.slice(150)
-    const invalidSheet = line.slice(0, 44) + 'ABC' + line.slice(47)
-    const invalidFlag = line.slice(0, 349) + 'X' + line.slice(350)
-
-    expect(() => parseBPA(invalidDate)).to.throw('Invalid date at line 1')
-    expect(() => parseBPA(invalidBirthDate)).to.throw('Invalid birth date at line 1')
-    expect(() => parseBPA(invalidSheet)).to.throw('Invalid sheet number at line 1')
-    expect(() => parseBPA(invalidFlag)).to.throw('Invalid homeless flag at line 1')
+    const edited =
+      line.slice(0, 36) +
+      '20200230' +
+      'ABC' +
+      line.slice(47, 142) +
+      '19901302' +
+      line.slice(150, 349) +
+      'X' +
+      line.slice(350)
+    const { records, errors } = parseBPA(edited)
+    expect(records.individual[0]).to.include({ date: null, sheetNumber: null })
+    expect(records.individual[0].patient).to.include({ birthDate: null, homeless: null })
+    expect(errors.map(({ field }) => field)).to.include.members([
+      'date',
+      'sheetNumber',
+      'patient.birthDate',
+      'patient.homeless',
+    ])
     expect(() => parseBPA()).to.throw(TypeError)
   })
 })
 
 describe('parseBPARaw', () => {
-  it('inspects Windows-1252 byte positions in overlong records only when requested', () => {
+  it('extracts Windows-1252 byte positions from overlong records without an option', () => {
     const { utf8Text, windows1252Text } = getShiftedBPAExport()
-    const utf8Line = utf8Text.split('\r\n')[2]
-    const ansiLine = windows1252Text.split('\r\n')[2]
-
-    expect(utf8Line).to.have.lengthOf(351)
-    expect(ansiLine).to.have.lengthOf(355)
+    expect(utf8Text.split('\r\n')[2]).to.have.lengthOf(351)
+    expect(windows1252Text.split('\r\n')[2]).to.have.lengthOf(355)
     expect(parseBPARaw(utf8Text).individual[0].patient).to.include({ homeless: 'N', noCpf: 'N' })
-    expect(() => parseBPARaw(windows1252Text)).to.throw('Invalid individual entry width at line 3')
-    expect(() => parseBPARaw(windows1252Text, { allowExtraCharacters: false })).to.throw(
-      'Invalid individual entry width at line 3'
+    expect(parseBPARaw(windows1252Text).individual[0].patient).to.include({
+      homeless: '0',
+      noCpf: '5',
+    })
+    const { records, errors } = parseBPA(windows1252Text)
+    expect(records.individual[0].patient).to.include({ homeless: null, noCpf: null })
+    expect(errors.some(({ lineNumber, field }) => lineNumber === 3 && field === null)).to.equal(
+      true
     )
-    expect(() => parseBPA(windows1252Text)).to.throw('Invalid individual entry width at line 3')
-
-    const raw = parseBPARaw(windows1252Text, { allowExtraCharacters: true })
-    expect(raw.individual[0].patient).to.include({ homeless: '0', noCpf: '5' })
-    expect(ansiLine.slice(351)).to.equal('53NN')
+    expect(windows1252Text.split('\r\n')[2].slice(351)).to.equal('53NN')
   })
 
-  it('also allows extra characters after consolidated entries without changing their fields', () => {
+  it('ignores extra characters after consolidated entries', () => {
     const text = getExport([procedure], { individual: false })
-    const overflow = text + 'EXTRA'
-
-    expect(() => parseBPARaw(overflow)).to.throw('Invalid consolidated entry width at line 2')
-    expect(() => parseBPA(overflow)).to.throw('Invalid consolidated entry width at line 2')
-    expect(parseBPARaw(overflow, { allowExtraCharacters: true })).to.deep.equal(parseBPARaw(text))
+    expect(parseBPARaw(text + 'EXTRA')).to.deep.equal(parseBPARaw(text))
+    expect(parseBPA(text + 'EXTRA').errors.some(({ field }) => field === null)).to.equal(true)
   })
 
-  it('still rejects short records and unknown types when extra characters are allowed', () => {
-    const options = { allowExtraCharacters: true }
-    const lines = getExport().split('\r\n')
-
-    expect(() => parseBPARaw('\n' + lines[1].slice(0, -1), options)).to.throw(
-      'Invalid consolidated entry width at line 2'
-    )
-    expect(() => parseBPARaw('\n' + lines[2].slice(0, -1), options)).to.throw(
-      'Invalid individual entry width at line 2'
-    )
-    expect(() => parseBPARaw('\n99unknown', options)).to.throw('Unknown BPA record type at line 2')
-    expect(() => parseBPARaw(undefined, options)).to.throw(TypeError, 'BPA export must be a string')
+  it('extracts short records with empty strings for missing slices', () => {
+    const result = parseBPARaw('02short\n03short')
+    expect(result.consolidated[0]).to.include({
+      type: '02',
+      cnes: 'short',
+      sheetNumber: '',
+      quantity: '',
+    })
+    expect(result.individual[0]).to.include({ type: '03', cnes: 'short', date: '', quantity: '' })
+    expect(result.individual[0].patient).to.include({
+      cns: '',
+      birthDate: '',
+      homeless: '',
+      noCpf: '',
+    })
   })
 
   it('returns all fields as trimmed strings without losing zeros, dates, or flags', () => {
     const text = getExport()
-    const native = parseBPA(text)
+    const native = parseBPA(text).records
     const raw = parseBPARaw(text)
     const age = String(differenceInYears(new Date(), birthDate)).padStart(3, '0')
 
@@ -317,16 +337,29 @@ describe('parseBPARaw', () => {
       patient: true,
     },
     { start: 349, end: 350, value: 'X', field: 'homeless', error: 'homeless flag', patient: true },
-    { start: 350, end: 351, value: ' ', field: 'noCpf', error: 'no CPF flag', patient: true },
+    { start: 350, end: 351, value: 'X', field: 'noCpf', error: 'no CPF flag', patient: true },
   ]
-  invalidFields.forEach(({ start, end, value, field, error, patient }) => {
-    it('exposes an invalid ' + field + ' while native parsing still rejects it', () => {
+  invalidFields.forEach(({ start, end, value, field, patient }) => {
+    it('exposes ' + field + ' while native parsing reports its error', () => {
       const line = getExport([procedure], { consolidated: false }).split('\r\n')[1]
       const text = '01#BPA#header\n\n' + line.slice(0, start) + value + line.slice(end)
       const entry = parseBPARaw(text).individual[0]
 
       expect((patient ? entry.patient : entry)[field]).to.equal(value.trim())
-      expect(() => parseBPA(text)).to.throw('Invalid ' + error + ' at line 3')
+      expect(parseBPA(text).errors).to.deep.include({
+        lineNumber: 3,
+        recordType: '03',
+        field: patient ? 'patient.' + field : field,
+        value: value.trim(),
+        message:
+          field === 'sequenceNumber'
+            ? 'Required field'
+            : field === 'date' || field === 'birthDate'
+            ? 'Invalid date; expected YYYYMMDD'
+            : field === 'homeless' || field === 'noCpf'
+            ? 'Expected one of: S, N'
+            : 'Must contain only digits',
+      })
     })
   })
 
@@ -335,7 +368,13 @@ describe('parseBPARaw', () => {
     const text = line.slice(0, 21) + 'ABC' + line.slice(24)
 
     expect(parseBPARaw(text).consolidated[0].sheetNumber).to.equal('ABC')
-    expect(() => parseBPA(text)).to.throw('Invalid sheet number at line 1')
+    expect(parseBPA(text).errors).to.deep.include({
+      lineNumber: 1,
+      recordType: '02',
+      field: 'sheetNumber',
+      value: 'ABC',
+      message: 'Must contain only digits',
+    })
   })
 
   it('preserves order, sheet positions, and single-type exports', () => {
@@ -376,14 +415,10 @@ describe('parseBPARaw', () => {
     expect(entry.patient.noCpf).to.equal('N')
   })
 
-  it('rejects unsupported input, unknown record types, and incorrect widths', () => {
+  it('rejects unsupported input and unknown record types', () => {
     expect(() => parseBPARaw()).to.throw(TypeError, 'BPA export must be a string')
     expect(() => parseBPARaw('01#BPA#header\n\n99unknown')).to.throw(
       'Unknown BPA record type at line 3'
     )
-    expect(() => parseBPARaw('\n02short')).to.throw('Invalid consolidated entry width at line 2')
-    expect(() => parseBPARaw('\n03short')).to.throw('Invalid individual entry width at line 2')
-    const line = getExport([procedure], { consolidated: false }).split('\r\n')[1]
-    expect(() => parseBPARaw(line + 'X')).to.throw('Invalid individual entry width at line 1')
   })
 })

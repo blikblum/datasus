@@ -66,18 +66,53 @@ but does not validate whether their values satisfy DATASUS business rules.
 ## Parse a BPA export
 
 ```js
-const { consolidated, individual } = parseBPA(exportText)
-console.log(individual[0].patient.name) // 'Ana Lima'
-console.log(individual[0].sheetNumber) // 1
+const { records, errors } = parseBPA(exportText)
+console.log(records.individual[0].patient.name) // 'Ana Lima'
+console.log(records.individual[0].sheetNumber) // 1
+console.log(errors) // all layout validation errors, or []
 ```
 
-`parseBPA(text)` returns `{ consolidated, individual }` arrays in file order. It
-skips the header and blank lines. Parsed dates are `Date` objects (or `null` for
-blank dates), numeric fields such as quantity and sheet number are numbers, and
-most identifiers remain strings to preserve leading zeros. It accepts CRLF, LF,
-or CR line endings and reports malformed record widths or fields with line numbers.
+`parseBPA(text)` returns `{ records, errors }`. `records` contains
+`{ consolidated, individual }` arrays in file order, including records with
+validation errors. This is a breaking change from the previous return shape:
+access `result.records.individual` instead of `result.individual`.
 
-To inspect fields without converting their values, use `parseBPARaw(text)`:
+The parser skips headers and blank lines, accepts CRLF, LF, and CR line endings,
+and checks BPAC/BPAI fields against the production-record rules in
+[the export layout](resources/Layout_Exportacao_BPA.pdf). Validation covers widths,
+required fields, numeric formats and padding, dates and competence, sheet/sequence
+and age ranges, declared choices, and ethnicity/race rules. Patient CPF and CNS
+may both be supplied. INE (`nationalId`) is optional; when supplied,
+it must contain ten digits, padded with zeros on the left. Field requirements
+and availability do not depend on competence. The current layout widths
+(48 and 351 characters, excluding line endings) apply to all competences.
+Header rules, check-digit algorithms, external code-table membership, and
+procedure-dependent requirements are not checked. The generator is unchanged
+and may produce records with validation errors.
+
+Parsed dates are `Date` objects, numeric fields such as quantity and sheet number
+are numbers, and most identifiers remain strings to preserve leading zeros.
+Unparseable native fields become `null`; blank optional dates and flags also
+become `null` without errors. Values that convert successfully remain available
+even if a range or cross-field rule rejects them. Original identifier strings
+remain available even when invalid.
+
+Validation continues through every field and line. Each error contains
+`lineNumber` (one-based physical line), `recordType`, `field`, `value`, and
+`message`. Field paths use names such as `patient.homeless`; `field` is `null`
+for a record-width error. `value` is the trimmed field string, or the full line
+for a width error. Errors follow physical-line and field-layout order. Unknown
+record types are reported and skipped; short and overlong recognized records
+remain in the result. Non-string input still throws a `TypeError`.
+
+```js
+// Example field error:
+// { lineNumber: 26, recordType: '03', field: 'patient.homeless',
+//   value: '0', message: 'Expected one of: S, N' }
+```
+
+To inspect fields without converting or validating their values, use
+`parseBPARaw(text)`:
 
 ```js
 const raw = parseBPARaw(exportText)
@@ -86,21 +121,12 @@ console.log(raw.individual[0].date) // '20260812'
 console.log(raw.individual[0].patient.homeless) // 'N'
 ```
 
-It returns the same structure as `parseBPA`, with every field represented as a
-trimmed string. Leading zeros are preserved and blank fields become `''`.
-Invalid dates, numeric values, and flags remain available for inspection instead
-of causing conversion errors. Record types and exact widths are still validated
-by default. To inspect overlong records at their original fixed positions, use:
-
-```js
-const raw = parseBPARaw(decodedText, { allowExtraCharacters: true })
-```
-
-This option accepts records longer than 48 (consolidated) or 351 (individual)
-characters, ignoring characters beyond the layout when extracting fields.
-Short records and unknown record types are still rejected. It does not realign
-shifted fields or move trailing flags into their intended positions. `parseBPA`
-always requires exact record widths.
+It returns `{ consolidated, individual }`, with every field represented as a
+trimmed string. Leading zeros are preserved and blank or missing fields become
+`''`. No line-length checks are performed: extraction uses fixed positions in
+short and overlong records, ignoring characters beyond the layout. It does not
+realign shifted fields or move trailing flags into their intended positions.
+Unknown record types and non-string input still throw errors.
 
 Both parsers operate on already decoded text; neither converts file encoding,
 normalizes Unicode, nor repairs fields shifted by incorrect decoding.
@@ -131,11 +157,13 @@ with native data, raw field strings, and the original line available for each ro
 Matched patients also expose these representations. Both tabs decode export files
 exclusively as Windows-1252 to reproduce the positions read by the BPA program,
 even when the uploaded bytes were written as UTF-8. Error reports use UTF-8 with
-a Windows-1252 fallback. The demo enables raw inspection of overlong records and
-preserves each complete decoded original line. If native parsing fails, both tabs
-show the error and use raw values for the entire file; short records and unknown
-types still prevent loading. Files are processed
-entirely in the browser and are not sent to a server.
+a Windows-1252 fallback. Both tabs display an error count and the complete
+validation error list while preserving partial native records, raw field strings,
+and complete decoded original lines. Record details and matched-patient cards
+include their own validation errors. Unknown types do not prevent later records
+from loading; short and overlong recognized records remain inspectable. Records
+with malformed matching keys cannot produce accidental report matches. Files
+are processed entirely in the browser and are not sent to a server.
 
 To run the demo locally:
 

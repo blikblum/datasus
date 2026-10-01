@@ -3,16 +3,26 @@ import { parseBPA, parseBPARaw } from '../src/index.js'
 const PAGE_SIZE = 50
 
 export const parseBPAForInspection = (text) => {
-  const rawParsed = parseBPARaw(text, { allowExtraCharacters: true })
-  try {
-    return { parsed: parseBPA(text), rawParsed, conversionError: null }
-  } catch (conversionError) {
-    return { parsed: rawParsed, rawParsed, conversionError }
-  }
+  const result = parseBPA(text)
+  const recognizedLines = text.split(/\r\n|\n|\r/).filter((rawLine) => {
+    const line = rawLine.replace(/^\uFEFF/, '')
+    return line.startsWith('02') || line.startsWith('03')
+  })
+  return { ...result, rawRecords: parseBPARaw(recognizedLines.join('\n')) }
 }
 
-export const indexBPARecords = (text, parsed, rawParsed) => {
+export const indexBPAErrors = (errors) => {
+  const byLine = new Map()
+  errors.forEach((error) => {
+    if (!byLine.has(error.lineNumber)) byLine.set(error.lineNumber, [])
+    byLine.get(error.lineNumber).push(error)
+  })
+  return byLine
+}
+
+export const indexBPARecords = (text, parsed, rawParsed, errors = []) => {
   const records = { individual: [], consolidated: [] }
+  const errorsByLine = indexBPAErrors(errors)
 
   text.split(/\r\n|\n|\r/).forEach((rawLine, index) => {
     const line = rawLine.replace(/^\uFEFF/, '')
@@ -29,7 +39,12 @@ export const indexBPARecords = (text, parsed, rawParsed) => {
     if (!entry || (rawParsed && !rawEntry)) {
       throw new Error('Não foi possível associar os registros às linhas da exportação.')
     }
-    const record = { entry, lineNumber: index + 1, rawLine: line }
+    const record = {
+      entry,
+      lineNumber: index + 1,
+      rawLine: line,
+      errors: errorsByLine.get(index + 1) || [],
+    }
     if (rawParsed) record.rawEntry = rawEntry
     records[group].push(record)
   })

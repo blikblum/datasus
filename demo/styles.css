@@ -542,6 +542,15 @@ h2 {
   padding-top: 0.8rem;
 }
 
+.validation-errors {
+  max-height: 24rem;
+  margin: 0;
+  padding: 1rem 1rem 1rem 2rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
 .record-details summary {
   width: fit-content;
   color: #2b6b5d;
@@ -693,11 +702,35 @@ h2 {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.table-error-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #315d51;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.table-error-filter input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: #174d47;
+}
+
 .record-group-switch {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
 .group-button,
@@ -710,6 +743,23 @@ h2 {
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+.export-row--error {
+  background: #fff4f1;
+}
+
+.record-error-badge {
+  display: block;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 99px;
+  background: #fbe2dd;
+  color: #a23c35;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .group-button {
@@ -791,6 +841,8 @@ h2 {
 }
 
 .export-detail-content {
+  /* Keep expanded code blocks out of the table's intrinsic column sizing. */
+  contain: inline-size;
   width: min(100%, 900px);
   max-width: calc(90vw - 3rem);
   padding: 0.2rem 0.5rem 0.8rem;
