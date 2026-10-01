@@ -10,7 +10,7 @@ export const parseBPAErrorReport = (text) => {
   const occurrences = []
   let cnes
 
-  text.split(/\r?\n/).forEach((rawLine, index) => {
+  text.split(/\r\n|\n|\r/).forEach((rawLine, index) => {
     const line = rawLine.replace(/\u00a0/g, ' ')
     const cnesMatch = line.match(CNES_LINE)
 

@@ -60,6 +60,43 @@ describe('parseBPAErrorReport', () => {
     expect(parseBPAErrorReport('RELATORIO DE OCORRENCIAS\nTIPO COMPET.')).to.deep.equal([])
   })
 
+  it('parses CR-only printer reports with page breaks and repeated headings', () => {
+    const pageHeader = [
+      '\fBDSIA202608b************************************************************ 06.04',
+      'RELATORIO DE OCORRENCIAS NA CONSISTENCIA',
+      '******************************************************************************\u001b(s17,27H',
+      ' CNES : 0001234 UNIDADE',
+      ' TIPO COMPET. FL/SEQ PROCED. CBO CNS PROFISS. OCORRENCIA',
+      ' ',
+    ]
+    const report = [
+      ...pageHeader,
+      ` ${sampleRow}    `,
+      ` ${sampleRow.replace('CEP DO USUARIO INVALIDO', 'OUTRO ERRO')}    \f`,
+      '',
+      ' ',
+      ...pageHeader,
+      ` ${sampleRow.replace('002/20', '003/01')}    \f`,
+    ].join('\r')
+
+    const occurrences = parseBPAErrorReport(report)
+
+    expect(occurrences).to.have.lengthOf(3)
+    expect(occurrences.map(({ cnes }) => cnes)).to.deep.equal(['0001234', '0001234', '0001234'])
+    expect(occurrences.map(({ occurrence }) => occurrence)).to.deep.equal([
+      'CEP DO USUARIO INVALIDO',
+      'OUTRO ERRO',
+      'CEP DO USUARIO INVALIDO',
+    ])
+    expect(occurrences[2]).to.include({ sheetNumber: '003', sequenceNumber: '01' })
+  })
+
+  it('preserves line numbers with mixed CR, CRLF, and LF endings', () => {
+    const report = `CNES : 0001234\r${sampleRow}\r\nTIPO COMPET.\nBPAI 08/2026 INVALID`
+
+    expect(() => parseBPAErrorReport(report)).to.throw('Malformed BPAI row at line 4')
+  })
+
   it('reports malformed BPAI rows with their line number', () => {
     expect(() => parseBPAErrorReport('CNES : 2804891\nBPAI 08/2026 INVALID')).to.throw(
       'Malformed BPAI row at line 2'

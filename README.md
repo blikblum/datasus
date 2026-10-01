@@ -91,7 +91,8 @@ console.log(occurrences[0].occurrence) // 'INVALID PATIENT POSTAL CODE'
 `type`, `competence` (`YYYYMM`), `sheetNumber`, `sequenceNumber`, `procedureCode`,
 `cbo`, `professionalCns`, and `occurrence`. These values are strings, including
 sheet and sequence numbers. The report must contain a `CNES` section before its
-BPAI rows. BPAC report rows are currently unsupported.
+BPAI rows. It accepts CRLF, LF, or CR line endings, including printer reports with
+page breaks and repeated headings. BPAC report rows are currently unsupported.
 
 ## Demo
 
