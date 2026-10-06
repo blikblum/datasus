@@ -140,7 +140,7 @@ describe('matchBPAErrors', () => {
     expect(result.matches).to.have.lengthOf(1)
     expect(result.matches[0].entry.patient).to.include({
       name: 'Ana Lima',
-      cns: '123456789012345',
+      cns: '',
       cpf: '12345678901',
     })
     expect(result.matches[0].lineNumber).to.equal(4)

@@ -577,6 +577,11 @@ describe('BPA', () => {
           procedures: [{ patient: { cns: 123456789010009 } }],
         })[0]
         expect(entry.substr(59, 15)).to.be.equal('123456789010009')
+
+        entry = getIndividualEntries({
+          procedures: [{ patient: { cns: 123456789010009, cpf: '12345678901' } }],
+        })[0]
+        expect(entry.substr(59, 15)).to.be.equal('               ')
       })
 
       it('should have patient gender at 75', () => {

@@ -94,7 +94,7 @@ describe('parseBPA', () => {
         maintainerCnpj: '',
         nationalId: '0000000007',
         patient: {
-          cns: '001234567890123',
+          cns: '',
           gender: 'F',
           ibge: '355030',
           name: 'Ana Lima',

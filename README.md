@@ -63,6 +63,9 @@ fixed-width records. By default, **each procedure produces both** a consolidated
 dates must be `Date` objects. The generator formats fields to their fixed widths
 but does not validate whether their values satisfy DATASUS business rules.
 
+For individual records, supply either `patient.cpf` or `patient.cns`. If both are
+provided, the generator emits the CPF and leaves the patient CNS field blank.
+
 ## Parse a BPA export
 
 ```js
@@ -82,13 +85,15 @@ and checks BPAC/BPAI fields against the production-record rules in
 [the export layout](resources/Layout_Exportacao_BPA.pdf). Validation covers widths,
 required fields, numeric formats and padding, dates and competence, sheet/sequence
 and age ranges, declared choices, and ethnicity/race rules. Patient CPF and CNS
-may both be supplied. INE (`nationalId`) is optional; when supplied,
+must not be supplied together; supplying both reports a `patient.cpf` error while
+preserving both identifiers in the parsed record. Both fields are optional.
+INE (`nationalId`) is optional; when supplied,
 it must contain ten digits, padded with zeros on the left. Field requirements
 and availability do not depend on competence. The current layout widths
 (48 and 351 characters, excluding line endings) apply to all competences.
 Header rules, check-digit algorithms, external code-table membership, and
-procedure-dependent requirements are not checked. The generator is unchanged
-and may produce records with validation errors.
+procedure-dependent requirements are not checked. The generator may produce
+records with validation errors.
 
 Parsed dates are `Date` objects, numeric fields such as quantity and sheet number
 are numbers, and most identifiers remain strings to preserve leading zeros.

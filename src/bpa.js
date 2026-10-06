@@ -71,6 +71,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
   const age = patient.birthDate ? differenceInYears(new Date(), patient.birthDate) : 0
   const birthDate = patient.birthDate ? format(patient.birthDate, 'yyyyMMdd') : EMPTY_DATE
   const date = procedure.date ? format(procedure.date, 'yyyyMMdd') : EMPTY_DATE
+  const effectivePatientCNS = patient.cpf ? '' : patient.cns
   const entry = [
     '03',
     padStartNumber(normalizeNumberText(origin.cnes), 7, '0').slice(0, 7),
@@ -81,7 +82,7 @@ const getIndividualEntry = (procedure, competence, origin, index) => {
     padStartNumber(sheetNumber, 3, '0').slice(0, 3),
     padStartNumber(sequentialNumber, 2, '0').slice(0, 2),
     normalizeNumberText(procedure.code).padStart(10, '0').slice(0, 10),
-    `${patient.cns || ''}`.padStart(15, ' ').slice(0, 15),
+    `${effectivePatientCNS || ''}`.padStart(15, ' ').slice(0, 15),
     (patient.gender || ' ').slice(0, 1).slice(0, 1),
     `${patient.ibge || ''}`.padEnd(6, ' ').slice(0, 6),
     `${procedure.cid || ''}`.padEnd(4, ' ').slice(0, 4),

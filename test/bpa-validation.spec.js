@@ -240,14 +240,54 @@ describe('BPA layout validation', () => {
     expect(fieldErrors(replace(line, 150, 2, '05'), 'patient.ethnicity')).to.deep.equal([])
   })
 
-  it('accepts patient CPF and CNS together and preserves both identifiers', () => {
+  it('rejects patient CPF and CNS together while preserving both identifiers', () => {
     const both = replace(individual(), 59, 15, '000000000000002')
     const { records, errors } = parseBPA(both)
-    expect(errors).to.deep.equal([])
+    expect(errors).to.deep.equal([
+      {
+        lineNumber: 1,
+        recordType: '03',
+        field: 'patient.cpf',
+        value: '12345678901',
+        message: 'Must be blank when patient.cns is supplied',
+      },
+    ])
     expect(records.individual[0].patient).to.include({
       cns: '000000000000002',
       cpf: '12345678901',
     })
+    expect(parseBPARaw(both).individual[0].patient).to.include({
+      cns: '000000000000002',
+      cpf: '12345678901',
+    })
+  })
+
+  it('accepts patient CPF alone, CNS alone, or neither identifier', () => {
+    const cpfOnly = individual()
+    const neither = replace(cpfOnly, 338, 11, ' '.repeat(11))
+    const cnsOnly = replace(neither, 59, 15, '000000000000002')
+    for (const line of [cpfOnly, cnsOnly, neither]) {
+      expect(parseBPA(line).errors).to.deep.equal([])
+    }
+  })
+
+  it('reports the CPF/CNS conflict alongside field errors in layout order', () => {
+    let line = replace(individual(), 59, 15, 'A00000000000002')
+    line = replace(line, 338, 11, 'A2345678901')
+    line = replace(line, 349, 1, 'X')
+    const { errors } = parseBPA(line + '\n' + individual())
+    expect(
+      errors.map(({ lineNumber, field, message }) => ({ lineNumber, field, message }))
+    ).to.deep.equal([
+      { lineNumber: 1, field: 'patient.cns', message: 'Must contain only digits' },
+      { lineNumber: 1, field: 'patient.cpf', message: 'Must contain only digits' },
+      {
+        lineNumber: 1,
+        field: 'patient.cpf',
+        message: 'Must be blank when patient.cns is supplied',
+      },
+      { lineNumber: 1, field: 'patient.homeless', message: 'Expected one of: S, N' },
+    ])
   })
 
   it('checks alphanumeric patient names while leaving other text unrestricted', () => {

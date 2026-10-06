@@ -163,6 +163,9 @@ const validateEntry = (rawEntry, slices, layout, report) => {
     if (rule.field === 'patient.ethnicity' && rawEntry.patient.race !== '05') {
       error('Must be blank unless patient.race is 05')
     }
+    if (rule.field === 'patient.cpf' && rawEntry.patient.cns) {
+      error('Must be blank when patient.cns is supplied')
+    }
   })
   return entry
 }
